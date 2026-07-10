@@ -1,6 +1,7 @@
 """Command-line interface for drift_detector."""
 
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -9,6 +10,7 @@ from drift_detector.data.load import load_training_data
 from drift_detector.models.train import train_model
 from drift_detector.optimisation.optuna import run_optimisation
 from drift_detector.tracking.mlflow import (
+    log_source_versions,
     save_model,
     setup_mlflow,
     start_run,
@@ -67,8 +69,11 @@ def main(model_name, configs_dir, optimise, do_train):
 
     best_params = config["params"]
 
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
     if optimise:
-        with start_run(run_name=f"{model_name}-optimise"):
+        with start_run(run_name=f"{model_name}-optimise-{timestamp}"):
+            log_source_versions()
             study = run_optimisation(
                 X_train,
                 y_train,
@@ -80,7 +85,8 @@ def main(model_name, configs_dir, optimise, do_train):
             logger.info("Best params: %s", best_params)
 
     if do_train:
-        with start_run(run_name=f"{model_name}-train"):
+        with start_run(run_name=f"{model_name}-train-{timestamp}"):
+            log_source_versions()
             pipeline = train_model(
                 model_name=model_name,
                 params=best_params,

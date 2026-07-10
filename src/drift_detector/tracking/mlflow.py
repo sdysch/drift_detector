@@ -1,6 +1,7 @@
 """Thin wrapper around the MLflow tracking API."""
 
 import logging
+import subprocess
 from pathlib import Path
 
 import mlflow
@@ -54,6 +55,35 @@ def log_config(config):
         if isinstance(values, dict):
             for key, value in values.items():
                 mlflow.log_param(f"{section}.{key}", value)
+
+
+def _run_cmd(args):
+    """Run a shell command and return stdout, or ``None`` on failure."""
+    try:
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def log_source_versions():
+    """Log the current git and DVC commit hashes as MLflow parameters."""
+    git_hash = _run_cmd(["git", "rev-parse", "HEAD"])
+    if git_hash:
+        mlflow.log_param("git_commit", git_hash)
+    else:
+        logger.warning("Failed to retrieve git commit hash")
+
+    dvc_hash = _run_cmd(["dvc", "commit", "--dry"])
+    if dvc_hash:
+        mlflow.log_param("dvc_hash", dvc_hash)
+    else:
+        logger.warning("Failed to retrieve DVC hash")
 
 
 def log_metrics(metrics):
