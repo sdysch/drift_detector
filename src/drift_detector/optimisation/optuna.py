@@ -117,6 +117,8 @@ def run_optimisation(
     study = optuna.create_study(
         direction="minimize",
         study_name=config["study"]["name"],
+        storage=config["study"].get("storage"),
+        load_if_exists=True,
     )
 
     objective = create_objective(
@@ -130,6 +132,7 @@ def run_optimisation(
     study.optimize(
         objective,
         n_trials=config["n_trials"],
+        n_jobs=config.get("n_jobs", 1),
     )
 
     return study
