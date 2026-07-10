@@ -137,7 +137,7 @@ def main(n_samples, seed, output):
         output,
         index=False,
     )
-    click.echo(f"Wrote {n_samples} rows to {output}")
+    logger.info("Wrote %d rows to %s", n_samples, output)
 
 
 if __name__ == "__main__":

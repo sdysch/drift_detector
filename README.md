@@ -2,6 +2,16 @@
 
 A framework for testing real-time data drift detection on regression models.
 
+## Usage
+
+```bash
+# generate synthetic data
+ingest_data --n-samples 50000 --seed 42
+
+# split into train/test
+split_data --input data/raw/data.csv --test-size 0.2 --seed 42
+```
+
 ## Dataset
 
 Synthetic regression dataset generated via `src/drift_detector/data/ingest.py`.

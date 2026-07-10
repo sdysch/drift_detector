@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 ingest_data = "drift_detector.data.ingest:main"
+split_data = "drift_detector.data.split:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
