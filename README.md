@@ -1,0 +1,28 @@
+# Drift Detector
+
+A framework for testing real-time data drift detection on regression models.
+
+## Dataset
+
+Synthetic regression dataset generated via `src/drift_detector/data/ingest.py`.
+Features are designed with known correlation strengths to the target, making it
+suitable for testing drift detection methods under controlled conditions.
+
+| Feature | Distribution | Correlation with target |
+|---|---|---|
+| `feature_1` | Gaussian (standardised) | +0.29 |
+| `feature_2` | Gaussian (standardised) | +0.22 |
+| `feature_3` | Gaussian (standardised) | -0.14 |
+| `feature_gaussian` | Gaussian + noise | +0.28 |
+| `feature_lognormal` | Log-normal (skewed) | -0.28 |
+| `feature_exponential` | Exponential + noise | +0.29 |
+| `category` | Categorical (A/B/C/D) | — |
+| `type` | Categorical (type_1/2/3) | — |
+
+Target is standardised to zero mean, unit variance.
+
+## Plots
+
+| Correlation Heatmap | Feature Distributions |
+|---|---|
+| ![Correlation Heatmap](plots/correlation_heatmap.png) | ![Feature Histograms](plots/feature_histograms.png) |
