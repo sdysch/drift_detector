@@ -1,8 +1,10 @@
 """
 Generate a synthetic regression dataset for this project.
-Use sklearn's make_regression function, add:
+
+Builds on sklearn's ``make_regression`` output by adding:
+    * Categorical features with target effects,
     * Non-linear relationships,
-    * Categorical features
+    * Correlated noise features (gaussian, log-normal, exponential).
 """
 
 import logging
@@ -25,7 +27,7 @@ def make_dataset(
 
     Builds on sklearn's ``make_regression`` output by adding categorical
     features (``category``, ``type``) with target effects,
-    non-linear terms.
+    non-linear terms, and correlated noise features.
 
     Args:
         n_samples: Number of rows to generate.
@@ -38,11 +40,11 @@ def make_dataset(
 
     logger.info("Generating %d synthetic samples (seed=%d)", n_samples, random_state)
 
-    X, y = make_regression(
+    X, _ = make_regression(
         n_samples=n_samples,
-        n_features=5,
+        n_features=3,
         n_informative=3,
-        noise=40,
+        noise=1,
         random_state=random_state,
     )
 
@@ -52,9 +54,15 @@ def make_dataset(
             "feature_1",
             "feature_2",
             "feature_3",
-            "feature_4",
-            "feature_5",
         ],
+    )
+
+    # build target from explicit coefficients so correlations are controlled
+    y = (
+        200 * df["feature_1"]
+        + 150 * df["feature_2"]
+        - 100 * df["feature_3"]
+        + rng.standard_normal(n_samples) * 50
     )
 
     # categorical features
@@ -71,26 +79,39 @@ def make_dataset(
 
     # add categorical effects to target
     category_effect = {
-        "A": 20,
-        "B": -10,
-        "C": 5,
-        "D": 30,
-    }
-
-    type_effect = {
-        "type_1": -20,
-        "type_2": 10,
-        "type_3": 50,
+        "A": 10,
+        "B": -5,
+        "C": 3,
+        "D": 15,
     }
 
     y += df["category"].map(category_effect)
-    y += df["type"].map(type_effect)
 
     # non-linear relationships
-    y += df["feature_1"] ** 2 * 0.1
-    y += 4.0 / df["feature_2"]
+    y += df["feature_1"] ** 2 * 0.5
+    y += 2.0 / df["feature_2"]
+
+    # === correlated noise features ===
+    # Each feature shares a signal with y, plus independent noise,
+    # so Pearson r is meaningful but not exactly 1.
+    signal = rng.standard_normal(n_samples)
+
+    df["feature_gaussian"] = signal + rng.standard_normal(n_samples)
+    y += 300 * signal
+
+    neg_signal = -signal
+    df["feature_lognormal"] = (
+        rng.lognormal(mean=0.5, sigma=0.5, size=n_samples) + neg_signal
+    )
+    y += 220 * neg_signal
+
+    df["feature_exponential"] = rng.exponential(scale=1.0, size=n_samples) + signal
+    y += 200 * signal
 
     df["target"] = y
+
+    # scale target to zero mean, unit variance
+    df["target"] = (df["target"] - df["target"].mean()) / df["target"].std()
 
     logger.info(
         "Dataset complete: %d rows, %d columns.",
