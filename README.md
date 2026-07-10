@@ -53,3 +53,9 @@ Target is standardised to zero mean, unit variance.
 | Correlation Heatmap | Feature Distributions |
 |---|---|
 | ![Correlation Heatmap](plots/correlation_heatmap.png) | ![Feature Histograms](plots/feature_histograms.png) |
+
+## To do
+- [ ] Add tests
+- [ ] Pydantic validation
+- [ ] Update README
+- [ ] Final retraining pipeline
