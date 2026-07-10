@@ -42,7 +42,7 @@ def make_dataset(
         n_samples=n_samples,
         n_features=5,
         n_informative=3,
-        noise=20,
+        noise=40,
         random_state=random_state,
     )
 
