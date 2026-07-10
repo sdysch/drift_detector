@@ -2,7 +2,7 @@ experiment:
   name: synthetic-regression
 
 tracking:
-  uri: mlruns
+  uri: sqlite:///mlflow.db
   experiment_name: synthetic-regression
 
 data:
