@@ -1,0 +1,21 @@
+experiment:
+  name: synthetic-regression
+
+data:
+  path: data/train.csv
+  target: target
+
+features:
+  numeric:
+    - feature_1
+    - feature_2
+    - feature_3
+    - feature_gaussian
+    - feature_lognormal
+    - feature_exponential
+
+  categorical:
+    - category
+    - type
+
+random_state: 42

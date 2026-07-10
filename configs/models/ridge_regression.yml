@@ -1,0 +1,15 @@
+model:
+  name: ridge
+
+params:
+  alpha: 1.0
+
+optuna:
+  enabled: true
+
+  search_space:
+    alpha:
+      type: float
+      low: 0.001
+      high: 100
+      log: true

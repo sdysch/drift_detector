@@ -19,10 +19,11 @@ dependencies = [
     "pandas>=2.3.3",
     "scikit-learn>=1.9.0",
     "seaborn>=0.13.2",
+    "xgboost>=3.3.0",
 ]
 
 [project.scripts]
-ingest_data = "drift_detector.data.ingest:main"
+generate_data = "drift_detector.data.generate:main"
 split_data = "drift_detector.data.split:main"
 
 [tool.setuptools.packages.find]

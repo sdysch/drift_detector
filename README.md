@@ -6,7 +6,7 @@ A framework for testing real-time data drift detection on regression models.
 
 ```bash
 # generate synthetic data
-ingest_data --n-samples 50000 --seed 42
+generate_data --n-samples 50000 --seed 42
 
 # split into train/test
 split_data --input data/raw/data.csv --test-size 0.2 --seed 42

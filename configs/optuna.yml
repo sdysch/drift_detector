@@ -1,0 +1,13 @@
+study:
+  name: regression-model-search
+
+n_trials: 100
+
+sampler:
+  name: TPESampler
+
+direction:
+  - minimize
+
+metric:
+  name: rmse

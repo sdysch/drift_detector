@@ -1,0 +1,7 @@
+model:
+  name: linear_regression
+
+params: {}
+
+optuna:
+  enabled: false
