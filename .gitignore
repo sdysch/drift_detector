@@ -11,4 +11,4 @@ wheels/
 
 *.csv
 
-mlflow.db
+*.db

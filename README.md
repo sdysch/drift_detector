@@ -59,3 +59,4 @@ Target is standardised to zero mean, unit variance.
 - [ ] Pydantic validation
 - [ ] Update README
 - [ ] Final retraining pipeline
+- [ ] Add plot artifacts to mlflow
