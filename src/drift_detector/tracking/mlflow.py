@@ -3,9 +3,11 @@
 import logging
 import subprocess
 from pathlib import Path
+import joblib
 
 import mlflow
 import mlflow.sklearn
+
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +127,6 @@ def save_model(model, path="models/model.pkl"):
 
     dest = Path(path)
     dest.parent.mkdir(parents=True, exist_ok=True)
-
-    import joblib
 
     joblib.dump(model, dest)
     logger.info("Model saved to %s", dest)
