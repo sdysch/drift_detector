@@ -30,12 +30,16 @@ def create_preprocessor(
                 "categorical",
                 Pipeline(
                     [
-                        ("encoder", OneHotEncoder()),
+                        (
+                            "encoder",
+                            OneHotEncoder(handle_unknown="infrequent_if_exist"),
+                        ),
                     ]
                 ),
                 categorical_features,
             ),
-        ]
+        ],
+        remainder="passthrough",
     )
 
 

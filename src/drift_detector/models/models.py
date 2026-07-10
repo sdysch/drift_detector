@@ -24,4 +24,9 @@ def build_model(name: str, params: dict):
         "ridge": Ridge,
     }
 
+    if name not in models:
+        raise ValueError(
+            f"Unknown model '{name}'. Choose from: {', '.join(sorted(models))}"
+        )
+
     return models[name](**params)

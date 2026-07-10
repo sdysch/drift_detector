@@ -3,8 +3,8 @@
 import logging
 import subprocess
 from pathlib import Path
-import joblib
 
+import joblib
 import mlflow
 import mlflow.sklearn
 
@@ -44,21 +44,6 @@ def start_run(run_name=None, nested=False):
     return mlflow.start_run(run_name=run_name, nested=nested)
 
 
-def log_config(config):
-    """Log a nested config dict as flat ``section.key`` parameters.
-
-    Parameters
-    ----------
-    config : dict[str, dict]
-        Top-level keys are section names; nested key-value pairs are
-        logged as ``section.key = value``.
-    """
-    for section, values in config.items():
-        if isinstance(values, dict):
-            for key, value in values.items():
-                mlflow.log_param(f"{section}.{key}", value)
-
-
 def _run_cmd(args):
     """Run a shell command and return stdout, or ``None`` on failure."""
     try:
@@ -74,43 +59,12 @@ def _run_cmd(args):
 
 
 def log_source_versions():
-    """Log the current git and DVC commit hashes as MLflow parameters."""
+    """Log the current git commit hash as an MLflow parameter."""
     git_hash = _run_cmd(["git", "rev-parse", "HEAD"])
     if git_hash:
         mlflow.log_param("git_commit", git_hash)
     else:
         logger.warning("Failed to retrieve git commit hash")
-
-    dvc_hash = _run_cmd(["dvc", "commit", "--dry"])
-    if dvc_hash:
-        mlflow.log_param("dvc_hash", dvc_hash)
-    else:
-        logger.warning("Failed to retrieve DVC hash")
-
-
-def log_metrics(metrics):
-    """Log a dictionary of metric name-value pairs.
-
-    Parameters
-    ----------
-    metrics : dict[str, float]
-        Mapping of metric names to their numeric values.
-    """
-    for name, value in metrics.items():
-        mlflow.log_metric(name, value)
-
-
-def log_model(model, name="model"):
-    """Persist a scikit-learn-compatible model to MLflow.
-
-    Parameters
-    ----------
-    model : object
-        A fitted estimator that implements the scikit-learn API.
-    name : str, default ``'model''``
-        Artifact path under which the model is stored.
-    """
-    mlflow.sklearn.log_model(model, name)
 
 
 def save_model(model, path="models/model.pkl"):

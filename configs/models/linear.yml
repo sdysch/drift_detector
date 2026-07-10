@@ -1,5 +1,5 @@
 model:
-  name: linear_regression
+  name: linear
 
 params: {}
 
