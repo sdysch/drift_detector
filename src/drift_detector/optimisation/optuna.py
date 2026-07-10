@@ -5,8 +5,8 @@ import optuna
 
 from sklearn.model_selection import cross_val_score
 
-from drift_detector.models.factory import create_pipeline
-from drift_detector.models.search_spaces import get_search_space
+from drift_detector.models.pipeline import build_pipeline
+from drift_detector.optimisation.search_spaces import get_search_space
 
 
 def create_objective(
@@ -51,7 +51,7 @@ def create_objective(
             config["optuna"]["search_space"],
         )
 
-        pipeline = create_pipeline(
+        pipeline = build_pipeline(
             model_name=model_name,
             model_params=params,
             numeric_features=numeric_features,

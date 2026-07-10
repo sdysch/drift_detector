@@ -23,6 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
+drift_detector = "drift_detector.cli:main"
 generate_data = "drift_detector.data.generate:main"
 split_data = "drift_detector.data.split:main"
 

@@ -1,6 +1,10 @@
 experiment:
   name: synthetic-regression
 
+tracking:
+  uri: mlruns
+  experiment_name: synthetic-regression
+
 data:
   path: data/train.csv
   target: target

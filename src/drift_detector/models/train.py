@@ -3,7 +3,7 @@
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
-from drift_detector.data.pipeline import build_pipeline
+from drift_detector.models.pipeline import build_pipeline
 
 
 def train_model(

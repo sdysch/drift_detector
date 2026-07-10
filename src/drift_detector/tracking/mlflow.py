@@ -1,7 +1,12 @@
 """Thin wrapper around the MLflow tracking API."""
 
+import logging
+from pathlib import Path
+
 import mlflow
 import mlflow.sklearn
+
+logger = logging.getLogger(__name__)
 
 
 def setup_mlflow(tracking_uri, experiment_name):
@@ -74,3 +79,24 @@ def log_model(model, name="model"):
         Artifact path under which the model is stored.
     """
     mlflow.sklearn.log_model(model, name)
+
+
+def save_model(model, path="models/model.pkl"):
+    """Log a model to MLflow and persist it to disk.
+
+    Parameters
+    ----------
+    model : object
+        A fitted estimator that implements the scikit-learn API.
+    path : str, default ``'models/model.pkl'``
+        Local file path to save the serialised model.
+    """
+    mlflow.sklearn.log_model(model, "model")
+
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    import joblib
+
+    joblib.dump(model, dest)
+    logger.info("Model saved to %s", dest)
