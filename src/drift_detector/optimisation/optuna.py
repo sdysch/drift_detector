@@ -4,9 +4,9 @@ import logging
 
 import mlflow
 import optuna
+from sklearn.model_selection import cross_val_predict, KFold
 
-from sklearn.model_selection import cross_val_score
-
+from drift_detector.models.metrics import compute_metrics
 from drift_detector.models.pipeline import build_pipeline
 from drift_detector.optimisation.search_spaces import get_search_space
 
@@ -23,8 +23,7 @@ def create_objective(
     """Build an Optuna objective function for the configured model.
 
     Each trial creates a preprocessing + model pipeline, evaluates it via
-    5-fold cross-validation on RMSE, and logs parameters / metrics to
-    MLflow.
+    5-fold cross-validation, and logs parameters / metrics to MLflow.
 
     Parameters
     ----------
@@ -62,37 +61,25 @@ def create_objective(
             categorical_features=categorical_features,
         )
 
+        cv = KFold(n_splits=5, shuffle=True, random_state=42)
+        y_pred = cross_val_predict(pipeline, X_train, y_train, cv=cv)
+        metrics = compute_metrics(y_train, y_pred)
+
         with mlflow.start_run(nested=True):
-            mlflow.log_param(
-                "model",
-                model_name,
-            )
-
+            mlflow.log_param("model", model_name)
             mlflow.log_params(params)
-
-            scores = cross_val_score(
-                pipeline,
-                X_train,
-                y_train,
-                cv=5,
-                scoring="neg_root_mean_squared_error",
-            )
-
-            rmse = -scores.mean()
-
-            mlflow.log_metric(
-                "rmse",
-                rmse,
-            )
+            mlflow.log_metrics(metrics)
 
         logger.info(
-            "Trial %d finished with value: %.4f (params: %s)",
+            "Trial %d | MAE: %.4f | RMSE: %.4f | R²: %.4f (params: %s)",
             trial.number,
-            rmse,
+            metrics["mae"],
+            metrics["rmse"],
+            metrics["r2"],
             params,
         )
 
-        return rmse
+        return metrics["mae"]
 
     return objective
 

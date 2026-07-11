@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from drift_detector.data.load import load_training_data
+from drift_detector.models.metrics import compute_metrics
 from drift_detector.models.train import train_model
 from drift_detector.optimisation.optuna import run_optimisation
 from drift_detector.tracking.mlflow import (
@@ -12,6 +13,7 @@ from drift_detector.tracking.mlflow import (
     log_data_shape,
     log_features,
     log_git_info,
+    log_metrics,
     log_model_params,
     log_package_versions,
     save_model,
@@ -101,7 +103,11 @@ def run_train(configs_dir, model_name):
             categorical_features=categorical,
         )
         save_model(pipeline)
-        logger.info("Training complete.")
+
+        y_pred = pipeline.predict(X_train)
+        metrics = compute_metrics(y_train, y_pred)
+        log_metrics(metrics)
+        logger.info("Training metrics: %s", metrics)
 
 
 def run_optimise(configs_dir, model_name):

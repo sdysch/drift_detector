@@ -116,6 +116,17 @@ def log_model_params(params):
         mlflow.log_param(f"param_{key}", value)
 
 
+def log_metrics(metrics):
+    """Log a dict of metrics to the active MLflow run.
+
+    Parameters
+    ----------
+    metrics : dict
+        Metric name -> value mapping.
+    """
+    mlflow.log_metrics(metrics)
+
+
 def save_model(model, path="models/model.pkl"):
     """Log a model to MLflow and persist it to disk.
 
