@@ -24,37 +24,29 @@ from drift_detector.tracking.mlflow import (
     setup_mlflow,
     start_run,
 )
-from drift_detector.utils.config import load_experiment_config
+from drift_detector.utils.config import load_config as load_config_yaml
 
 logger = logging.getLogger(__name__)
 
 
 def load_config(configs_dir, model_name, optimise=False):
-    """Load merged experiment config and set up MLflow tracking.
+    """Load consolidated config and set up MLflow tracking.
 
     Parameters
     ----------
     configs_dir : str or Path
         Directory containing the YAML config files.
     model_name : str
-        Model key used to locate ``configs/models/{model_name}.yml``.
+        Model key used to locate ``configs/{model_name}.yml``.
     optimise : bool, default False
-        When ``True``, the Optuna config is also loaded and merged.
+        ``optimise`` is no longer needed for config loading.
 
     Returns
     -------
     dict
-        Merged configuration dictionary.
+        Configuration dictionary.
     """
-    configs_dir = Path(configs_dir)
-    model_config_path = configs_dir / "models" / f"{model_name}.yml"
-    optuna_config_path = configs_dir / "optuna.yml" if optimise else None
-
-    config = load_experiment_config(
-        train_path=configs_dir / "train.yml",
-        model_path=model_config_path,
-        optuna_path=optuna_config_path,
-    )
+    config = load_config_yaml(Path(configs_dir) / f"{model_name}.yml")
 
     tracking = config.get("tracking", {})
     setup_mlflow(
