@@ -89,7 +89,7 @@ def make_dataset(
 
     # non-linear relationships
     y += df["feature_1"] ** 2 * 0.5
-    y += 2.0 / df["feature_2"]
+    y += df["feature_2"] ** 3
 
     # === correlated noise features ===
     # Each feature shares a signal with y, plus independent noise,

@@ -20,11 +20,8 @@ features:
 
 random_state: 42
 
-<<<<<<< HEAD
-=======
 metric: mae
 
->>>>>>> origin/main
 model:
   name: xgboost
 
@@ -39,15 +36,9 @@ params:
   gamma: 0.5800631195456216
   reg_lambda: 9.295254502245774
 
-<<<<<<< HEAD
-study:
-
-optuna:
-=======
 save_name_suffix: best
 
 study:
 
 optuna:
   metric: mae
->>>>>>> origin/main
