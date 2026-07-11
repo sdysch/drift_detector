@@ -96,7 +96,8 @@ def run_train(config_path):
             categorical_features=categorical,
         )
         train_time = time.perf_counter() - t0
-        save_model(pipeline, register_name=model_name)
+        suffix = config.get("save_name_suffix")
+        save_model(pipeline, register_name=model_name, name_suffix=suffix)
 
         y_pred = pipeline.predict(X_train)
         metrics = compute_metrics(y_train, y_pred)

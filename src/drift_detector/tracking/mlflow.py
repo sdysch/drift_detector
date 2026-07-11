@@ -141,7 +141,7 @@ _SKOPS_TRUSTED_TYPES = [
 ]
 
 
-def save_model(model, register_name=None):
+def save_model(model, register_name=None, name_suffix=None):
     """Log a model to MLflow and optionally register it.
 
     Parameters
@@ -151,6 +151,9 @@ def save_model(model, register_name=None):
     register_name : str, optional
         If provided, the model is also registered under this name in the
         MLflow Model Registry.
+    name_suffix : str, optional
+        Optional suffix appended to the local filename
+        (e.g. ``"best"`` → ``xgboost_best_v1.pkl``).
     """
     mlflow.sklearn.log_model(model, "model", skops_trusted_types=_SKOPS_TRUSTED_TYPES)
 
@@ -158,6 +161,8 @@ def save_model(model, register_name=None):
     models_dir.mkdir(parents=True, exist_ok=True)
 
     base_name = register_name or "model"
+    if name_suffix:
+        base_name = f"{base_name}_{name_suffix}"
     latest_version = 0
     try:
         client = mlflow.MlflowClient()
