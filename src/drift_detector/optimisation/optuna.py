@@ -1,6 +1,7 @@
 """Optuna-based hyper-parameter optimisation with MLflow tracking."""
 
 import logging
+import time
 
 import mlflow
 import optuna
@@ -73,8 +74,11 @@ def create_objective(
         )
 
         cv = KFold(n_splits=5, shuffle=True, random_state=42)
+        t0 = time.perf_counter()
         y_pred = cross_val_predict(pipeline, X_train, y_train, cv=cv)
+        trial_time = time.perf_counter() - t0
         metrics = compute_metrics(y_train, y_pred)
+        metrics["trial_time_s"] = round(trial_time, 3)
 
         with mlflow.start_run(nested=True):
             mlflow.log_param("model", model_name)
@@ -82,11 +86,12 @@ def create_objective(
             mlflow.log_metrics(metrics)
 
         logger.info(
-            "Trial %d | MAE: %.4f | RMSE: %.4f | R²: %.4f (params: %s)",
+            "Trial %d | MAE: %.4f | RMSE: %.4f | R²: %.4f | %.1fs (params: %s)",
             trial.number,
             metrics["mae"],
             metrics["rmse"],
             metrics["r2"],
+            trial_time,
             params,
         )
 

@@ -1,6 +1,7 @@
 """Orchestration layer for training and optimisation workflows."""
 
 import logging
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -95,6 +96,7 @@ def run_train(configs_dir, model_name):
         log_data_shape(X_train, y_train)
         log_model_params(config["params"])
 
+        t0 = time.perf_counter()
         pipeline = train_model(
             model_name=model_name,
             params=config["params"],
@@ -103,10 +105,12 @@ def run_train(configs_dir, model_name):
             numeric_features=numeric,
             categorical_features=categorical,
         )
+        train_time = time.perf_counter() - t0
         save_model(pipeline)
 
         y_pred = pipeline.predict(X_train)
         metrics = compute_metrics(y_train, y_pred)
+        metrics["train_time_s"] = round(train_time, 3)
         log_metrics(metrics)
         logger.info("Training metrics: %s", metrics)
 
