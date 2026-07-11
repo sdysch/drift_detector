@@ -154,13 +154,27 @@ def save_model(model, register_name=None):
     """
     mlflow.sklearn.log_model(model, "model", skops_trusted_types=_SKOPS_TRUSTED_TYPES)
 
-    local_path = Path("models") / f"{register_name or 'model'}.pkl"
-    local_path.parent.mkdir(parents=True, exist_ok=True)
+    models_dir = Path("models")
+    models_dir.mkdir(parents=True, exist_ok=True)
+
+    base_name = register_name or "model"
+    latest_version = 0
+    try:
+        client = mlflow.MlflowClient()
+        latest = client.get_latest_versions(base_name, stages=["None"])
+        if latest:
+            latest_version = max(v.version for v in latest)
+    except Exception:
+        pass
+
+    next_version = latest_version + 1
+    stem = f"{base_name}_v{next_version}"
+    local_path = models_dir / f"{stem}.pkl"
     joblib.dump(model, local_path)
     logger.info("Model saved to %s", local_path)
 
     run_id = mlflow.active_run().info.run_id
-    run_info = {"mlflow_run_id": run_id}
+    run_info = {"mlflow_run_id": run_id, "version": next_version}
     with open(local_path.with_suffix(".run_id.json"), "w") as f:
         json.dump(run_info, f)
     logger.info("Run ID saved to %s", local_path.with_suffix(".run_id.json"))
