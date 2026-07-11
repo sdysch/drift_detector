@@ -135,23 +135,41 @@ def log_metrics(metrics):
     mlflow.log_metrics(metrics)
 
 
-def save_model(model, path="models/model.pkl"):
-    """Log a model to MLflow and persist it to disk.
+_SKOPS_TRUSTED_TYPES = [
+    "xgboost.core.Booster",
+    "xgboost.sklearn.XGBRegressor",
+]
+
+
+def save_model(model, register_name=None):
+    """Log a model to MLflow and optionally register it.
 
     Parameters
     ----------
     model : object
         A fitted estimator that implements the scikit-learn API.
-    path : str, default ``'models/model.pkl'``
-        Local file path to save the serialised model.
+    register_name : str, optional
+        If provided, the model is also registered under this name in the
+        MLflow Model Registry.
     """
-    mlflow.sklearn.log_model(model, "model")
+    result = mlflow.sklearn.log_model(
+        model, "model", skops_trusted_types=_SKOPS_TRUSTED_TYPES
+    )
 
-    dest = Path(path)
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    local_path = Path("models") / f"{register_name or 'model'}.pkl"
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, local_path)
+    logger.info("Model saved to %s", local_path)
 
-    joblib.dump(model, dest)
-    logger.info("Model saved to %s", dest)
+    if register_name:
+        run_id = mlflow.active_run().info.run_id
+        model_uri = f"runs:/{run_id}/model"
+        result = mlflow.register_model(model_uri, register_name)
+        logger.info(
+            "Model registered as '%s' version %s",
+            register_name,
+            result.version,
+        )
 
 
 def log_optuna_plots(study):

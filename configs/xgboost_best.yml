@@ -1,0 +1,39 @@
+tracking:
+  uri: sqlite:///mlflow.db
+
+data:
+  path: data/train.csv
+  target: target
+
+features:
+  numeric:
+    - feature_1
+    - feature_2
+    - feature_3
+    - feature_gaussian
+    - feature_lognormal
+    - feature_exponential
+
+  categorical:
+    - category
+    - type
+
+random_state: 42
+
+model:
+  name: xgboost
+
+params:
+  colsample_bytree: 0.8290088264442756
+  min_child_weight: 2
+  reg_alpha: 5.9497016508725835
+  max_depth: 3
+  subsample: 0.9999284943111119
+  learning_rate: 0.023628961274176817
+  n_estimators: 447
+  gamma: 0.5800631195456216
+  reg_lambda: 9.295254502245774
+
+study:
+
+optuna:
