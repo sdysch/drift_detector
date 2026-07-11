@@ -6,11 +6,21 @@ import mlflow
 import optuna
 from sklearn.model_selection import cross_val_predict, KFold
 
-from drift_detector.models.metrics import compute_metrics
+from drift_detector.metrics import compute_metrics
 from drift_detector.models.pipeline import build_pipeline
 from drift_detector.optimisation.search_spaces import get_search_space
 
 logger = logging.getLogger(__name__)
+
+
+_DIRECTION = {"r2": "maximize"}
+
+
+def _get_metric(config):
+    """Return (metric_name, direction) from the optuna config."""
+    metric = config.get("optuna", {}).get("metric", "rmse")
+    direction = _DIRECTION.get(metric, "minimize")
+    return metric, direction
 
 
 def create_objective(
@@ -44,6 +54,7 @@ def create_objective(
         ``objective(trial) -> float`` compatible with
         ``optuna.study.Study.optimize``.
     """
+    metric, _ = _get_metric(config)
 
     def objective(trial):
         model_name = config["model"]["name"]
@@ -79,7 +90,7 @@ def create_objective(
             params,
         )
 
-        return metrics["mae"]
+        return metrics[metric]
 
     return objective
 
@@ -112,8 +123,10 @@ def run_optimisation(
     optuna.study.Study
         Completed study with optimisation results.
     """
+    _, direction = _get_metric(config)
+
     study = optuna.create_study(
-        direction="minimize",
+        direction=direction,
         study_name=config["study"]["name"],
         storage=config["study"].get("storage"),
         load_if_exists=True,

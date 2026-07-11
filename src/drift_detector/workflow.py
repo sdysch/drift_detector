@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from drift_detector.data.load import load_training_data
-from drift_detector.models.metrics import compute_metrics
+from drift_detector.metrics import compute_metrics
 from drift_detector.models.train import train_model
 from drift_detector.optimisation.optuna import run_optimisation
 from drift_detector.tracking.mlflow import (
