@@ -3,7 +3,6 @@
 import logging
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 
 import mlflow
 
@@ -29,24 +28,21 @@ from drift_detector.utils.config import load_config as load_config_yaml
 logger = logging.getLogger(__name__)
 
 
-def load_config(configs_dir, model_name, optimise=False):
-    """Load consolidated config and set up MLflow tracking.
+def load_config(config_path):
+    """Load consolidated config from a single YAML file and set up MLflow tracking.
 
     Parameters
     ----------
-    configs_dir : str or Path
-        Directory containing the YAML config files.
-    model_name : str
-        Model key used to locate ``configs/{model_name}.yml``.
-    optimise : bool, default False
-        ``optimise`` is no longer needed for config loading.
+    config_path : str or Path
+        Path to the YAML config file.
 
     Returns
     -------
     dict
         Configuration dictionary.
     """
-    config = load_config_yaml(Path(configs_dir) / f"{model_name}.yml")
+    config = load_config_yaml(config_path)
+    model_name = config.get("model", {}).get("name", "unknown")
 
     tracking = config.get("tracking", {})
     setup_mlflow(
@@ -69,17 +65,16 @@ def _prepare_data(config):
     return X_train, y_train, numeric, categorical
 
 
-def run_train(configs_dir, model_name):
+def run_train(config_path):
     """Train a model with config defaults and persist the result.
 
     Parameters
     ----------
-    configs_dir : str or Path
-        Directory containing the YAML config files.
-    model_name : str
-        Model key (e.g. ``"random_forest"``).
+    config_path : str or Path
+        Path to the YAML config file.
     """
-    config = load_config(configs_dir, model_name)
+    config = load_config(config_path)
+    model_name = config["model"]["name"]
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
     with start_run(run_name=f"{model_name}-train-{_timestamp()}"):
@@ -109,7 +104,7 @@ def run_train(configs_dir, model_name):
         logger.info("Training metrics: %s", metrics)
 
 
-def run_optimise(configs_dir, model_name):
+def run_optimise(config_path):
     """Run Optuna hyper-parameter search and log the best result.
 
     Each trial is logged to a ``{model_name}_experiments`` MLflow
@@ -118,12 +113,11 @@ def run_optimise(configs_dir, model_name):
 
     Parameters
     ----------
-    configs_dir : str or Path
-        Directory containing the YAML config files.
-    model_name : str
-        Model key (e.g. ``"random_forest"``).
+    config_path : str or Path
+        Path to the YAML config file.
     """
-    config = load_config(configs_dir, model_name, optimise=True)
+    config = load_config(config_path)
+    model_name = config["model"]["name"]
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
     study = run_optimisation(
@@ -145,15 +139,13 @@ def run_optimise(configs_dir, model_name):
         logger.info("Best params: %s", study.best_params)
 
 
-def run_best(configs_dir, model_name, metric="rmse", direction="minimize"):
+def run_best(config_path, metric="rmse", direction="minimize"):
     """Find the best run in a model's MLflow experiment.
 
     Parameters
     ----------
-    configs_dir : str or Path
-        Directory containing the YAML config files.
-    model_name : str
-        Model key (e.g. ``"random_forest"``).
+    config_path : str or Path
+        Path to the YAML config file.
     metric : str, default ``"rmse"``
         Metric to sort by.
     direction : str, default ``"minimize"``
@@ -165,7 +157,8 @@ def run_best(configs_dir, model_name, metric="rmse", direction="minimize"):
     tuple[dict, dict]
         ``(params, metrics)`` from the best run.
     """
-    load_config(configs_dir, model_name, optimise=True)
+    config = load_config(config_path)
+    model_name = config["model"]["name"]
 
     order = f"metrics.{metric} {'ASC' if direction == 'minimize' else 'DESC'}"
     runs = mlflow.search_runs(
