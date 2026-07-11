@@ -61,10 +61,44 @@ def xgboost_search_space(
             "learning_rate",
             config["learning_rate"]["low"],
             config["learning_rate"]["high"],
-            log=config["learning_rate"].get(
-                "log",
-                False,
-            ),
+            log=config["learning_rate"].get("log", False),
+        ),
+        "max_depth": trial.suggest_int(
+            "max_depth",
+            config["max_depth"]["low"],
+            config["max_depth"]["high"],
+        ),
+        "min_child_weight": trial.suggest_int(
+            "min_child_weight",
+            config["min_child_weight"]["low"],
+            config["min_child_weight"]["high"],
+        ),
+        "subsample": trial.suggest_float(
+            "subsample",
+            config["subsample"]["low"],
+            config["subsample"]["high"],
+        ),
+        "colsample_bytree": trial.suggest_float(
+            "colsample_bytree",
+            config["colsample_bytree"]["low"],
+            config["colsample_bytree"]["high"],
+        ),
+        "gamma": trial.suggest_float(
+            "gamma",
+            config["gamma"]["low"],
+            config["gamma"]["high"],
+        ),
+        "reg_alpha": trial.suggest_float(
+            "reg_alpha",
+            config["reg_alpha"]["low"],
+            config["reg_alpha"]["high"],
+            log=config["reg_alpha"].get("log", False),
+        ),
+        "reg_lambda": trial.suggest_float(
+            "reg_lambda",
+            config["reg_lambda"]["low"],
+            config["reg_lambda"]["high"],
+            log=config["reg_lambda"].get("log", False),
         ),
     }
 
