@@ -20,7 +20,7 @@ _DIRECTION = {"r2": "maximize"}
 
 def _get_metric(config):
     """Return (metric_name, direction) from the optuna config."""
-    metric = config.get("optuna", {}).get("metric", "rmse")
+    metric = config["optuna"]["metric"]
     direction = _DIRECTION.get(metric, "minimize")
     return metric, direction
 
@@ -153,8 +153,8 @@ def run_optimisation(
 
     study.optimize(
         objective,
-        n_trials=config["n_trials"],
-        n_jobs=config.get("n_jobs", 1),
+        n_trials=config["optuna"]["n_trials"],
+        n_jobs=config["optuna"].get("n_jobs", 1),
     )
 
     return study
