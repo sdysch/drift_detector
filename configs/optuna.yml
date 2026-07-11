@@ -1,7 +1,3 @@
-study:
-  name: regression-model-search
-  storage: sqlite:///optuna.db
-
 metric: rmse
 n_trials: 100
 n_jobs: 1

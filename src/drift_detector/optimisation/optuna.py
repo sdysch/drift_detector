@@ -10,6 +10,7 @@ from sklearn.model_selection import cross_val_predict, KFold
 from drift_detector.metrics import compute_metrics
 from drift_detector.models.pipeline import build_pipeline
 from drift_detector.optimisation.search_spaces import get_search_space
+from drift_detector.tracking.mlflow import setup_mlflow
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,8 @@ def create_objective(
     """Build an Optuna objective function for the configured model.
 
     Each trial creates a preprocessing + model pipeline, evaluates it via
-    5-fold cross-validation, and logs parameters / metrics to MLflow.
+    5-fold cross-validation, and logs parameters / metrics to MLflow
+    under a model-specific experiment.
 
     Parameters
     ----------
@@ -56,10 +58,9 @@ def create_objective(
         ``optuna.study.Study.optimize``.
     """
     metric, _ = _get_metric(config)
+    model_name = config["model"]["name"]
 
     def objective(trial):
-        model_name = config["model"]["name"]
-
         params = get_search_space(
             model_name,
             trial,
@@ -80,7 +81,12 @@ def create_objective(
         metrics = compute_metrics(y_train, y_pred)
         metrics["trial_time_s"] = round(trial_time, 3)
 
-        with mlflow.start_run(nested=True):
+        setup_mlflow(
+            tracking_uri=config.get("tracking", {}).get("uri", "mlruns"),
+            experiment_name=f"{model_name}_experiments",
+        )
+
+        with mlflow.start_run(run_name=f"trial_{trial.number}"):
             mlflow.log_param("model", model_name)
             mlflow.log_params(params)
             mlflow.log_metrics(metrics)

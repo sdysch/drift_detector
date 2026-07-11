@@ -1,6 +1,10 @@
 model:
   name: ridge
 
+study:
+  name: ridge-optimisation
+  storage: sqlite:///optuna.db
+
 params:
   alpha: 1.0
 

@@ -1,6 +1,10 @@
 model:
   name: xgboost
 
+study:
+  name: xgboost-optimisation
+  storage: sqlite:///optuna.db
+
 params:
   n_estimators: 300
   learning_rate: 0.05

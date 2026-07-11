@@ -118,6 +118,10 @@ def run_train(configs_dir, model_name):
 def run_optimise(configs_dir, model_name):
     """Run Optuna hyper-parameter search and log the best result.
 
+    Each trial is logged to a ``{model_name}_experiments`` MLflow
+    experiment. Study-level metadata (git, config, plots) is logged to
+    a final summary run in the same experiment.
+
     Parameters
     ----------
     configs_dir : str or Path
@@ -128,19 +132,20 @@ def run_optimise(configs_dir, model_name):
     config = load_config(configs_dir, model_name, optimise=True)
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
-    with start_run(run_name=f"{model_name}-optimise-{_timestamp()}"):
+    study = run_optimisation(
+        X_train,
+        y_train,
+        config,
+        numeric,
+        categorical,
+    )
+
+    with start_run(run_name=f"{model_name}-summary-{_timestamp()}"):
         log_git_info()
         log_package_versions()
         log_config(config)
         log_features(numeric, categorical)
         log_data_shape(X_train, y_train)
-
-        study = run_optimisation(
-            X_train,
-            y_train,
-            config,
-            numeric,
-            categorical,
-        )
         log_optuna_plots(study)
+        log_metrics(study.best_params)
         logger.info("Best params: %s", study.best_params)
