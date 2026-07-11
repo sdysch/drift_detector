@@ -71,15 +71,15 @@ def build_pipeline(
     model = build_model(model_name, model_params)
 
     if target_transform:
-        if target_transform == "yeojohnson":
+        if target_transform == "yeo-johnson":
             model = TransformedTargetRegressor(
                 regressor=model,
-                transformer=PowerTransformer(method="yeojohnson"),
+                transformer=PowerTransformer(method="yeo-johnson"),
                 check_inverse=False,
             )
         else:
             raise ValueError(
-                f"Unknown target transform '{target_transform}'. Options: ['yeojohnson']"
+                f"Unknown target transform '{target_transform}'. Options: ['yeo-johnson']"
             )
 
     return Pipeline(
