@@ -60,3 +60,4 @@ Target is standardised to zero mean, unit variance.
 - [ ] Update README
 - [ ] Final retraining pipeline
 - [ ] Add plot artifacts to mlflow
+- [ ] Final retraining pipeline as separate CLI step

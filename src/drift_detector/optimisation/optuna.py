@@ -1,5 +1,7 @@
 """Optuna-based hyper-parameter optimisation with MLflow tracking."""
 
+import logging
+
 import mlflow
 import optuna
 
@@ -7,6 +9,8 @@ from sklearn.model_selection import cross_val_score
 
 from drift_detector.models.pipeline import build_pipeline
 from drift_detector.optimisation.search_spaces import get_search_space
+
+logger = logging.getLogger(__name__)
 
 
 def create_objective(
@@ -80,6 +84,13 @@ def create_objective(
                 "rmse",
                 rmse,
             )
+
+        logger.info(
+            "Trial %d finished with value: %.4f (params: %s)",
+            trial.number,
+            rmse,
+            params,
+        )
 
         return rmse
 

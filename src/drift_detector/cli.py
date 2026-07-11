@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import click
+import optuna
 
 from drift_detector.data.load import load_training_data
 from drift_detector.models.train import train_model
@@ -39,6 +40,7 @@ logger = logging.getLogger(__name__)
 @click.option("--train", "do_train", is_flag=True, help="Train a final model.")
 def main(model_name, configs_dir, optimise, do_train):
     """drift_detector — train and optimise regression models."""
+    optuna.logging.set_verbosity(optuna.logging.INFO)
     configure_logging()
 
     if not optimise and not do_train:
