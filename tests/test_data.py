@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -66,6 +67,15 @@ class TestSplitDataset:
             df, target_column="target", test_size=0.25, random_state=0
         )
         assert len(train) + len(test) == 200
+
+    def test_preserves_target_distribution(self):
+        rng = np.random.default_rng(42)
+        df = pd.DataFrame({"target": rng.standard_normal(5000)})
+        train, test = split_dataset(
+            df, target_column="target", test_size=0.2, random_state=7
+        )
+        assert abs(train["target"].std() - test["target"].std()) < 0.1
+        assert abs(train["target"].mean() - test["target"].mean()) < 0.1
 
 
 class TestLoadTrainingData:

@@ -8,6 +8,7 @@ import optuna
 from sklearn.model_selection import cross_val_predict, KFold
 
 from drift_detector.metrics import compute_metrics
+from drift_detector.models.models import objective_for_model
 from drift_detector.models.pipeline import build_pipeline
 from drift_detector.optimisation.search_spaces import get_search_space
 from drift_detector.tracking.mlflow import setup_mlflow
@@ -19,8 +20,10 @@ _DIRECTION = {"r2": "maximize"}
 
 
 def _get_metric(config):
-    """Return (metric_name, direction) from the optuna config."""
-    metric = config["optuna"]["metric"]
+    """Return (metric_name, direction) from the config."""
+    metric = (
+        config.get("metric") or (config.get("optuna") or {}).get("metric") or "rmse"
+    )
     direction = _DIRECTION.get(metric, "minimize")
     return metric, direction
 
@@ -67,11 +70,16 @@ def create_objective(
             config["optuna"]["search_space"],
         )
 
+        obj = objective_for_model(model_name, metric)
+        if obj:
+            params["objective"] = obj
+
         pipeline = build_pipeline(
             model_name=model_name,
             model_params=params,
             numeric_features=numeric_features,
             categorical_features=categorical_features,
+            target_transform=config.get("target_transform"),
         )
 
         cv = KFold(n_splits=5, shuffle=True, random_state=42)

@@ -20,6 +20,8 @@ features:
 
 random_state: 42
 
+metric: mae
+
 model:
   name: xgboost
 
@@ -40,8 +42,8 @@ study:
 
 optuna:
   metric: rmse
-  n_trials: 100
-  n_jobs: 4
+  n_trials: 300
+  n_jobs: 6
 
   search_space:
     n_estimators:

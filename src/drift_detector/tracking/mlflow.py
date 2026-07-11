@@ -135,23 +135,63 @@ def log_metrics(metrics):
     mlflow.log_metrics(metrics)
 
 
-def save_model(model, path="models/model.pkl"):
-    """Log a model to MLflow and persist it to disk.
+_SKOPS_TRUSTED_TYPES = [
+    "xgboost.core.Booster",
+    "xgboost.sklearn.XGBRegressor",
+]
+
+
+def save_model(model, register_name=None, name_suffix=None):
+    """Log a model to MLflow and optionally register it.
 
     Parameters
     ----------
     model : object
         A fitted estimator that implements the scikit-learn API.
-    path : str, default ``'models/model.pkl'``
-        Local file path to save the serialised model.
+    register_name : str, optional
+        If provided, the model is also registered under this name in the
+        MLflow Model Registry.
+    name_suffix : str, optional
+        Optional suffix appended to the local filename
+        (e.g. ``"best"`` → ``xgboost_best_v1.pkl``).
     """
-    mlflow.sklearn.log_model(model, "model")
+    mlflow.sklearn.log_model(model, "model", skops_trusted_types=_SKOPS_TRUSTED_TYPES)
 
-    dest = Path(path)
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    models_dir = Path("models")
+    models_dir.mkdir(parents=True, exist_ok=True)
 
-    joblib.dump(model, dest)
-    logger.info("Model saved to %s", dest)
+    reg_name = register_name or "model"
+    local_base = f"{reg_name}_{name_suffix}" if name_suffix else reg_name
+
+    latest_version = 0
+    try:
+        client = mlflow.MlflowClient()
+        latest = client.get_latest_versions(reg_name, stages=["None"])
+        if latest:
+            latest_version = max(v.version for v in latest)
+    except Exception:
+        pass
+
+    next_version = latest_version + 1
+    stem = f"{local_base}_v{next_version}"
+    local_path = models_dir / f"{stem}.pkl"
+    joblib.dump(model, local_path)
+    logger.info("Model saved to %s", local_path)
+
+    run_id = mlflow.active_run().info.run_id
+    run_info = {"mlflow_run_id": run_id, "version": next_version}
+    with open(local_path.with_suffix(".run_id.json"), "w") as f:
+        json.dump(run_info, f)
+    logger.info("Run ID saved to %s", local_path.with_suffix(".run_id.json"))
+
+    if register_name:
+        model_uri = f"runs:/{run_id}/model"
+        result = mlflow.register_model(model_uri, register_name)
+        logger.info(
+            "Model registered as '%s' version %s",
+            register_name,
+            result.version,
+        )
 
 
 def log_optuna_plots(study):
