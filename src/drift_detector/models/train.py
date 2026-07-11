@@ -1,8 +1,11 @@
 """Model training utilities."""
 
+import copy
+
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
+from drift_detector.models.models import objective_for_model
 from drift_detector.models.pipeline import build_pipeline
 
 
@@ -13,6 +16,7 @@ def train_model(
     y_train: pd.Series,
     numeric_features: list[str],
     categorical_features: list[str],
+    objective_metric: str | None = None,
 ) -> Pipeline:
     """Build and fit a preprocessing + model pipeline.
 
@@ -31,15 +35,25 @@ def train_model(
         Names of numeric columns for preprocessing.
     categorical_features : list[str]
         Names of categorical columns for preprocessing.
+    objective_metric : str, optional
+        If provided, the model's loss objective is set to match this eval
+        metric (e.g. ``"mae"`` → absolute error for XGBoost).
 
     Returns
     -------
     Pipeline
         Fitted scikit-learn pipeline with preprocessing and model steps.
     """
+    model_params = copy.copy(params)
+    obj = (
+        objective_for_model(model_name, objective_metric) if objective_metric else None
+    )
+    if obj:
+        model_params["objective"] = obj
+
     pipeline = build_pipeline(
         model_name,
-        params,
+        model_params,
         numeric_features,
         categorical_features,
     )

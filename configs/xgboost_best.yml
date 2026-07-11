@@ -20,6 +20,8 @@ features:
 
 random_state: 42
 
+metric: mae
+
 model:
   name: xgboost
 
@@ -39,3 +41,4 @@ save_name_suffix: best
 study:
 
 optuna:
+  metric: mae

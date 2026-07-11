@@ -87,6 +87,9 @@ def run_train(config_path):
         log_model_params(config["params"])
 
         t0 = time.perf_counter()
+        obj_metric = config.get("metric") or (config.get("optuna", {}) or {}).get(
+            "metric"
+        )
         pipeline = train_model(
             model_name=model_name,
             params=config["params"],
@@ -94,6 +97,7 @@ def run_train(config_path):
             y_train=y_train,
             numeric_features=numeric,
             categorical_features=categorical,
+            objective_metric=obj_metric,
         )
         train_time = time.perf_counter() - t0
         suffix = config.get("save_name_suffix")
