@@ -10,6 +10,14 @@ import joblib
 import mlflow
 import mlflow.sklearn
 
+from optuna.visualization import (
+    plot_contour,
+    plot_optimization_history,
+    plot_parallel_coordinate,
+    plot_param_importances,
+    plot_slice,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -144,3 +152,35 @@ def save_model(model, path="models/model.pkl"):
 
     joblib.dump(model, dest)
     logger.info("Model saved to %s", dest)
+
+
+def log_optuna_plots(study):
+    """Generate and log Optuna diagnostic plots as HTML artifacts.
+
+    Logs the following plots:
+    - optimization_history.html — objective value over trials
+    - param_importances.html — hyperparameter importance rankings
+    - slice.html — objective vs each parameter individually
+    - parallel_coordinate.html — parameter combinations vs objective
+    - contour.html — pairwise parameter interactions
+
+    Parameters
+    ----------
+    study : optuna.study.Study
+        A completed optimisation study.
+    """
+
+    plots = {
+        "optimization_history": plot_optimization_history,
+        "param_importances": plot_param_importances,
+        "slice": plot_slice,
+        "parallel_coordinate": plot_parallel_coordinate,
+        "contour": plot_contour,
+    }
+
+    for name, fn in plots.items():
+        try:
+            fig = fn(study)
+            mlflow.log_text(fig.to_html(full_html=False), f"plots/{name}.html")
+        except Exception:
+            logger.warning("Failed to generate %s plot", name)

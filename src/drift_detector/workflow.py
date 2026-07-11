@@ -15,6 +15,7 @@ from drift_detector.tracking.mlflow import (
     log_git_info,
     log_metrics,
     log_model_params,
+    log_optuna_plots,
     log_package_versions,
     save_model,
     setup_mlflow,
@@ -137,4 +138,5 @@ def run_optimise(configs_dir, model_name):
             numeric,
             categorical,
         )
+        log_optuna_plots(study)
         logger.info("Best params: %s", study.best_params)
