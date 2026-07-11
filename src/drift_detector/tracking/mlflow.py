@@ -1,7 +1,9 @@
 """Thin wrapper around the MLflow tracking API."""
 
+import json
 import logging
 import subprocess
+from importlib.metadata import version
 from pathlib import Path
 
 import joblib
@@ -10,6 +12,17 @@ import mlflow.sklearn
 
 
 logger = logging.getLogger(__name__)
+
+# Packages whose versions are logged for reproducibility.
+_TRACKED_PACKAGES = [
+    "mlflow",
+    "scikit-learn",
+    "xgboost",
+    "optuna",
+    "pandas",
+    "numpy",
+    "click",
+]
 
 
 def setup_mlflow(tracking_uri, experiment_name):
@@ -58,13 +71,49 @@ def _run_cmd(args):
         return None
 
 
-def log_source_versions():
-    """Log the current git commit hash as an MLflow parameter."""
+def log_git_info():
+    """Log git commit hash and dirty state as MLflow parameters."""
     git_hash = _run_cmd(["git", "rev-parse", "HEAD"])
     if git_hash:
         mlflow.log_param("git_commit", git_hash)
     else:
         logger.warning("Failed to retrieve git commit hash")
+
+    git_dirty = _run_cmd(["git", "status", "--porcelain"])
+    mlflow.log_param("git_dirty", bool(git_dirty))
+
+
+def log_package_versions():
+    """Log versions of key dependencies as MLflow parameters."""
+    for pkg in _TRACKED_PACKAGES:
+        try:
+            mlflow.log_param(f"version_{pkg}", version(pkg))
+        except Exception:
+            logger.warning("Could not retrieve version for %s", pkg)
+
+
+def log_config(config):
+    """Log the full merged config as a JSON artifact."""
+    mlflow.log_text(json.dumps(config, indent=2), "config.json")
+
+
+def log_features(numeric, categorical):
+    """Log the feature lists used in the run."""
+    mlflow.log_param("features_numeric", json.dumps(numeric))
+    mlflow.log_param("features_categorical", json.dumps(categorical))
+    mlflow.log_param("n_features", len(numeric) + len(categorical))
+
+
+def log_data_shape(X_train, y_train):
+    """Log training data dimensions."""
+    mlflow.log_param("n_samples", len(X_train))
+    mlflow.log_param("n_input_features", X_train.shape[1])
+
+
+def log_model_params(params):
+    """Log model hyperparameters."""
+    for key, value in params.items():
+        mlflow.log_param(f"param_{key}", value)
 
 
 def save_model(model, path="models/model.pkl"):

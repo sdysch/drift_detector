@@ -8,7 +8,12 @@ from drift_detector.data.load import load_training_data
 from drift_detector.models.train import train_model
 from drift_detector.optimisation.optuna import run_optimisation
 from drift_detector.tracking.mlflow import (
-    log_source_versions,
+    log_config,
+    log_data_shape,
+    log_features,
+    log_git_info,
+    log_model_params,
+    log_package_versions,
     save_model,
     setup_mlflow,
     start_run,
@@ -80,7 +85,13 @@ def run_train(configs_dir, model_name):
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
     with start_run(run_name=f"{model_name}-train-{_timestamp()}"):
-        log_source_versions()
+        log_git_info()
+        log_package_versions()
+        log_config(config)
+        log_features(numeric, categorical)
+        log_data_shape(X_train, y_train)
+        log_model_params(config["params"])
+
         pipeline = train_model(
             model_name=model_name,
             params=config["params"],
@@ -107,7 +118,12 @@ def run_optimise(configs_dir, model_name):
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
     with start_run(run_name=f"{model_name}-optimise-{_timestamp()}"):
-        log_source_versions()
+        log_git_info()
+        log_package_versions()
+        log_config(config)
+        log_features(numeric, categorical)
+        log_data_shape(X_train, y_train)
+
         study = run_optimisation(
             X_train,
             y_train,
