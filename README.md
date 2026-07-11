@@ -55,9 +55,12 @@ Target is standardised to zero mean, unit variance.
 | ![Correlation Heatmap](plots/correlation_heatmap.png) | ![Feature Histograms](plots/feature_histograms.png) |
 
 ## To do
+- [ ] optuna:
+    - [ ] Store features used
+    - [ ] Store more metrics
+    - [ ] Add plot artifacts to mlflow
+    - [ ] Store models
 - [ ] Add tests
 - [ ] Pydantic validation
 - [ ] Update README
-- [ ] Final retraining pipeline
-- [ ] Add plot artifacts to mlflow
-- [ ] Final retraining pipeline as separate CLI step
+- [X] Final retraining pipeline as separate CLI step
