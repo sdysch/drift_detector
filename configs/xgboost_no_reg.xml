@@ -20,34 +20,22 @@ features:
 
 random_state: 42
 
-<<<<<<< HEAD
-=======
-metric: mae
-
->>>>>>> origin/main
 model:
   name: xgboost
 
 params:
-  colsample_bytree: 0.8290088264442756
+  colsample_bytree: 0.83
   min_child_weight: 2
-  reg_alpha: 5.9497016508725835
+  reg_alpha: 0.
   max_depth: 3
-  subsample: 0.9999284943111119
-  learning_rate: 0.023628961274176817
-  n_estimators: 447
+  subsample: 1.
+  learning_rate: 0.02
+  n_estimators: 300
   gamma: 0.5800631195456216
-  reg_lambda: 9.295254502245774
+  reg_lambda: 0.
 
-<<<<<<< HEAD
-study:
-
-optuna:
-=======
-save_name_suffix: best
+save_name_suffix: no_reg
 
 study:
 
 optuna:
-  metric: mae
->>>>>>> origin/main

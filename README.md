@@ -2,32 +2,71 @@
 
 A framework for testing real-time data drift detection on regression models.
 
-## Quick start
+## Setup
 
 ```bash
-# generate synthetic data
-generate_data --n-samples 50000 --seed 42
-
-# split into train/test
-split_data --input data/raw/data.csv --test-size 0.2 --seed 42
-
-# optimise hyper-parameters then train final model
-drift_detector --optimise --train
-
-# train only (uses config defaults)
-drift_detector --train --model ridge
+uv sync
 ```
 
-### CLI options
+Generate and split a synthetic dataset:
 
-| Flag | Description |
+```bash
+uv run generate_data --n-samples 50000 --seed 42
+uv run split_data --input data/raw/data.csv --test-size 0.2 --seed 42
+```
+
+## Usage
+
+All commands use per-model consolidated YAML configs in `configs/`.
+
+```bash
+# Train a model (writes models/{name}.pkl, logs to MLflow)
+uv run drift_detector train --config configs/xgboost.yml
+
+# Optimise hyper-parameters with Optuna
+uv run drift_detector optimise --config configs/xgboost.yml
+
+# Evaluate a trained model against test data
+uv run drift_detector eval --model models/xgboost.pkl --data data/test.csv
+
+# Find the best run from MLflow
+uv run drift_detector best --config configs/xgboost.yml
+
+# Launch MLflow UI
+uv run mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+
+## Commands
+
+| Command | Description |
 |---|---|
-| `--model` | Model to use: `random_forest` (default), `xgboost`, `ridge`, `linear` |
-| `--optimise` | Run Optuna hyper-parameter search |
-| `--train` | Train a final model |
-| `--configs-dir` | Config directory (default: `configs/`) |
+| `train --config <file>` | Train with model-specific config |
+| `optimise --config <file>` | Optuna hyper-parameter search |
+| `eval --model <pkl> --data <csv>` | Evaluate, compare to train metrics, generate plots |
+| `best --config <file>` | Query MLflow for best run |
 
-Flags can be combined: `--optimise --train` runs Optuna first, then trains with the best parameters.
+### Eval options
+
+| Flag | Default | Description |
+|---|---|---|
+| `--model` | (required) | Path to `.pkl` pipeline |
+| `--data` | (required) | Path to evaluation CSV |
+| `--target` | `target` | Target column name |
+| `--output-dir` | `plots` | Output directory for metrics + plots |
+
+### Configs
+
+Per-model YAML files at `configs/{model}.yml` containing:
+
+| Section | Purpose |
+|---|---|
+| `tracking` | MLflow tracking URI |
+| `data` | CSV path and target column |
+| `features` | Numeric and categorical feature lists |
+| `model` | Model name |
+| `params` | Default hyper-parameters |
+| `study` | Optuna study name and storage URI |
+| `optuna` | Metric, n_trials, n_jobs, search space |
 
 ## Dataset
 
@@ -53,6 +92,8 @@ Target is standardised to zero mean, unit variance.
 | Correlation Heatmap | Feature Distributions |
 |---|---|
 | ![Correlation Heatmap](plots/correlation_heatmap.png) | ![Feature Histograms](plots/feature_histograms.png) |
+
+Evaluation plots are saved to `plots/{model_name}/plots/`. The eval command produces actual-vs-predicted scatter, residual histogram, residuals-vs-predicted scatter, and error-by-feature plots.
 
 ## To do
 - [ ] optuna:

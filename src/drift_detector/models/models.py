@@ -10,6 +10,27 @@ from sklearn.linear_model import LinearRegression, Ridge
 from xgboost import XGBRegressor
 
 
+_METRIC_TO_XGBOOST_OBJECTIVE = {
+    "mae": "reg:absoluteerror",
+    "rmse": "reg:squarederror",
+    "r2": "reg:squarederror",
+    "mape": "reg:absoluteerror",
+    "wmape": "reg:absoluteerror",
+    "smape": "reg:absoluteerror",
+}
+
+
+def objective_for_model(model_name: str, metric: str) -> str | None:
+    """Return an objective/loss string for the given model and eval metric.
+
+    Only XGBoost supports custom objectives. Other models (linear, ridge,
+    random forest) ignore this.
+    """
+    if model_name == "xgboost":
+        return _METRIC_TO_XGBOOST_OBJECTIVE.get(metric)
+    return None
+
+
 @dataclass(frozen=True)
 class ModelSpec:
     """Immutable descriptor for a registered model."""
