@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import mlflow
 
 from drift_detector.data.load import load_training_data
+from drift_detector.models.evaluate import run_evaluation
 from drift_detector.metrics import compute_metrics
 from drift_detector.models.train import train_model
 from drift_detector.optimisation.optuna import run_optimisation
@@ -187,3 +188,29 @@ def run_best(config_path, metric="rmse", direction="minimize"):
     logger.info("Metrics: %s", metrics)
 
     return params, metrics
+
+
+def run_eval(model_path, data_path, target_column, output_dir="plots"):
+    """Evaluate a fitted model against a test CSV.
+
+    The fitted pipeline's preprocessor resolves features by column
+    name, so the CSV must contain the training feature columns (order
+    is independent).
+
+    Parameters
+    ----------
+    model_path : str or Path
+        Path to the fitted pipeline pickle file.
+    data_path : str or Path
+        Path to the evaluation CSV.
+    target_column : str
+        Name of the target column.
+    output_dir : str or Path
+        Root directory for evaluation outputs.
+    """
+    import pandas as pd
+
+    df = pd.read_csv(data_path)
+    X = df.drop(columns=[target_column])
+    y = df[target_column]
+    run_evaluation(model_path, X=X, y=y, output_dir=output_dir)
