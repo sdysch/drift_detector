@@ -6,10 +6,18 @@ import logging
 from pathlib import Path
 
 import click
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
+
+
+def _target_bins(y, n_bins=10):
+    """Bin a continuous target into quantile-based strata."""
+    bins = np.percentile(y, np.linspace(0, 100, n_bins + 1))
+    bins = np.unique(bins)
+    return np.digitize(y, bins[1:-1])
 
 
 def split_dataset(
@@ -21,10 +29,12 @@ def split_dataset(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split a DataFrame into train and test sets.
 
+    Uses quantile-based stratified sampling on the target to preserve
+    the target distribution across splits.
+
     Args:
         df: Source dataframe to split.
-        target_column: Name of the target column (unused in the split itself,
-            but kept for future stratification support).
+        target_column: Name of the target column.
         test_size: Fraction of rows held out for the test set.
         random_state: Seed for reproducibility.
 
@@ -38,10 +48,14 @@ def split_dataset(
         random_state,
     )
 
+    y = df[target_column]
+    bins = _target_bins(y)
+
     train_df, test_df = train_test_split(
         df,
         test_size=test_size,
         random_state=random_state,
+        stratify=bins,
     )
 
     logger.info("Train: %d rows, Test: %d rows", train_df.shape[0], test_df.shape[0])
