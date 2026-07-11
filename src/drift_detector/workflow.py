@@ -98,6 +98,7 @@ def run_train(config_path):
             numeric_features=numeric,
             categorical_features=categorical,
             objective_metric=obj_metric,
+            target_transform=config.get("target_transform"),
         )
         train_time = time.perf_counter() - t0
         suffix = config.get("save_name_suffix")

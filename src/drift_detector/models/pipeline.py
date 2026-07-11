@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, PowerTransformer
+from sklearn.compose import TransformedTargetRegressor
 
 from drift_detector.models.models import build_model
 
@@ -48,6 +49,7 @@ def build_pipeline(
     model_params: dict,
     numeric_features: list[str],
     categorical_features: list[str],
+    target_transform: str | None = None,
 ) -> Pipeline:
     """Create a full preprocessing + modelling pipeline.
 
@@ -60,16 +62,32 @@ def build_pipeline(
         model_params: Keyword arguments forwarded to the model constructor.
         numeric_features: Column names to treat as numeric.
         categorical_features: Column names to treat as categorical.
+        target_transform: Optional target transformation.
+            Supported: ``"yeojohnson"`` (works with negative values).
 
     Returns:
         A ``Pipeline`` with a ``"preprocessor"`` and ``"model"`` step.
     """
+    model = build_model(model_name, model_params)
+
+    if target_transform:
+        if target_transform == "yeojohnson":
+            model = TransformedTargetRegressor(
+                regressor=model,
+                transformer=PowerTransformer(method="yeojohnson"),
+                check_inverse=False,
+            )
+        else:
+            raise ValueError(
+                f"Unknown target transform '{target_transform}'. Options: ['yeojohnson']"
+            )
+
     return Pipeline(
         [
             (
                 "preprocessor",
                 create_preprocessor(numeric_features, categorical_features),
             ),
-            ("model", build_model(model_name, model_params)),
+            ("model", model),
         ]
     )

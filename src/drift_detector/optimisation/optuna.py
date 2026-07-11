@@ -79,6 +79,7 @@ def create_objective(
             model_params=params,
             numeric_features=numeric_features,
             categorical_features=categorical_features,
+            target_transform=config.get("target_transform"),
         )
 
         cv = KFold(n_splits=5, shuffle=True, random_state=42)

@@ -17,6 +17,7 @@ def train_model(
     numeric_features: list[str],
     categorical_features: list[str],
     objective_metric: str | None = None,
+    target_transform: str | None = None,
 ) -> Pipeline:
     """Build and fit a preprocessing + model pipeline.
 
@@ -38,6 +39,8 @@ def train_model(
     objective_metric : str, optional
         If provided, the model's loss objective is set to match this eval
         metric (e.g. ``"mae"`` → absolute error for XGBoost).
+    target_transform : str, optional
+        Optional target transformation (e.g. ``"yeojohnson"``).
 
     Returns
     -------
@@ -56,6 +59,7 @@ def train_model(
         model_params,
         numeric_features,
         categorical_features,
+        target_transform=target_transform,
     )
 
     pipeline.fit(X_train, y_train)
