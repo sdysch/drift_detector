@@ -57,7 +57,7 @@ def load_config(configs_dir, model_name, optimise=False):
     tracking = config.get("tracking", {})
     setup_mlflow(
         tracking_uri=tracking.get("uri", "mlruns"),
-        experiment_name=tracking.get("experiment_name", config["experiment"]["name"]),
+        experiment_name=f"{model_name}_experiments",
     )
 
     return config

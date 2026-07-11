@@ -1,9 +1,5 @@
-experiment:
-  name: synthetic-regression
-
 tracking:
   uri: sqlite:///mlflow.db
-  experiment_name: synthetic-regression
 
 data:
   path: data/train.csv
