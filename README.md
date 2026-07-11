@@ -56,9 +56,9 @@ Target is standardised to zero mean, unit variance.
 
 ## To do
 - [ ] optuna:
-    - [ ] Store features used
-    - [ ] Store more metrics
-    - [ ] Add plot artifacts to mlflow
+    - [X] Store features used
+    - [X] Store more metrics
+    - [X] Add plot artifacts to mlflow
     - [ ] Store models
 - [ ] Add tests
 - [ ] Pydantic validation
