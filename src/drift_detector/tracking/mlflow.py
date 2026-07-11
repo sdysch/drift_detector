@@ -160,20 +160,20 @@ def save_model(model, register_name=None, name_suffix=None):
     models_dir = Path("models")
     models_dir.mkdir(parents=True, exist_ok=True)
 
-    base_name = register_name or "model"
-    if name_suffix:
-        base_name = f"{base_name}_{name_suffix}"
+    reg_name = register_name or "model"
+    local_base = f"{reg_name}_{name_suffix}" if name_suffix else reg_name
+
     latest_version = 0
     try:
         client = mlflow.MlflowClient()
-        latest = client.get_latest_versions(base_name, stages=["None"])
+        latest = client.get_latest_versions(reg_name, stages=["None"])
         if latest:
             latest_version = max(v.version for v in latest)
     except Exception:
         pass
 
     next_version = latest_version + 1
-    stem = f"{base_name}_v{next_version}"
+    stem = f"{local_base}_v{next_version}"
     local_path = models_dir / f"{stem}.pkl"
     joblib.dump(model, local_path)
     logger.info("Model saved to %s", local_path)
