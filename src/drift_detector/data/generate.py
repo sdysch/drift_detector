@@ -132,6 +132,7 @@ def make_dataset(
 )
 def main(n_samples, seed, output):
     """CLI entry-point for generating the synthetic raw dataset."""
+    logging.basicConfig(level=logging.INFO)
     Path(output).parent.mkdir(parents=True, exist_ok=True)
     make_dataset(n_samples=n_samples, random_state=seed).to_csv(
         output,

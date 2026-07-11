@@ -67,6 +67,7 @@ def split_dataset(
 @click.option("--seed", default=42, type=int, help="Random seed for reproducibility")
 def main(input_path, output_dir, test_size, seed):
     """Split the raw dataset into train and test CSVs."""
+    logging.basicConfig(level=logging.INFO)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
