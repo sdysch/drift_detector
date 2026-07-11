@@ -5,6 +5,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import mlflow
+
 from drift_detector.data.load import load_training_data
 from drift_detector.metrics import compute_metrics
 from drift_detector.models.train import train_model
@@ -149,3 +151,54 @@ def run_optimise(configs_dir, model_name):
         log_optuna_plots(study)
         log_metrics(study.best_params)
         logger.info("Best params: %s", study.best_params)
+
+
+def run_best(configs_dir, model_name, metric="rmse", direction="minimize"):
+    """Find the best run in a model's MLflow experiment.
+
+    Parameters
+    ----------
+    configs_dir : str or Path
+        Directory containing the YAML config files.
+    model_name : str
+        Model key (e.g. ``"random_forest"``).
+    metric : str, default ``"rmse"``
+        Metric to sort by.
+    direction : str, default ``"minimize"``
+        ``"minimize"`` for metrics where lower is better,
+        ``"maximize"`` for metrics where higher is better.
+
+    Returns
+    -------
+    tuple[dict, dict]
+        ``(params, metrics)`` from the best run.
+    """
+    load_config(configs_dir, model_name, optimise=True)
+
+    order = f"metrics.{metric} {'ASC' if direction == 'minimize' else 'DESC'}"
+    runs = mlflow.search_runs(
+        experiment_names=[f"{model_name}_experiments"],
+        order_by=[order],
+        max_results=1,
+    )
+
+    if runs.empty:
+        logger.warning("No runs found for %s", model_name)
+        return {}, {}
+
+    run = runs.iloc[0]
+
+    params = {
+        k.removeprefix("params."): v for k, v in run.items() if k.startswith("params.")
+    }
+    metrics = {
+        k.removeprefix("metrics."): v
+        for k, v in run.items()
+        if k.startswith("metrics.")
+    }
+
+    logger.info("Best run: %s", run["run_id"])
+    logger.info("Params: %s", params)
+    logger.info("Metrics: %s", metrics)
+
+    return params, metrics

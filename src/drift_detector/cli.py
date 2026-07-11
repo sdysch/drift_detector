@@ -3,10 +3,11 @@
 import click
 import optuna
 
+from drift_detector.models.models import MODELS
 from drift_detector.utils.logging import configure_logging
-from drift_detector.workflow import run_optimise, run_train
+from drift_detector.workflow import run_best, run_optimise, run_train
 
-MODELS = ["linear", "random_forest", "xgboost", "ridge"]
+MODEL_NAMES = sorted(MODELS)
 
 
 @click.group()
@@ -20,7 +21,7 @@ def main():
     "--model",
     "model_name",
     default="random_forest",
-    type=click.Choice(MODELS),
+    type=click.Choice(MODEL_NAMES),
     help="Model to optimise.",
 )
 @click.option(
@@ -41,7 +42,7 @@ def optimise(model_name, configs_dir):
     "--model",
     "model_name",
     default="random_forest",
-    type=click.Choice(MODELS),
+    type=click.Choice(MODEL_NAMES),
     help="Model to train.",
 )
 @click.option(
@@ -53,6 +54,36 @@ def optimise(model_name, configs_dir):
 def train(model_name, configs_dir):
     """Train a model using the default hyper-parameters from the config."""
     run_train(configs_dir, model_name)
+
+
+@main.command()
+@click.option(
+    "--model",
+    "model_name",
+    default="random_forest",
+    type=click.Choice(MODEL_NAMES),
+    help="Model to find the best run for.",
+)
+@click.option(
+    "--metric",
+    default="rmse",
+    help="Metric to sort by.",
+)
+@click.option(
+    "--direction",
+    default="minimize",
+    type=click.Choice(["minimize", "maximize"]),
+    help="Whether lower or higher is better.",
+)
+@click.option(
+    "--configs-dir",
+    default="configs",
+    type=click.Path(),
+    help="Directory containing YAML config files.",
+)
+def best(model_name, metric, direction, configs_dir):
+    """Find the best run for a model from MLflow."""
+    run_best(configs_dir, model_name, metric, direction)
 
 
 if __name__ == "__main__":
