@@ -152,17 +152,20 @@ def save_model(model, register_name=None):
         If provided, the model is also registered under this name in the
         MLflow Model Registry.
     """
-    result = mlflow.sklearn.log_model(
-        model, "model", skops_trusted_types=_SKOPS_TRUSTED_TYPES
-    )
+    mlflow.sklearn.log_model(model, "model", skops_trusted_types=_SKOPS_TRUSTED_TYPES)
 
     local_path = Path("models") / f"{register_name or 'model'}.pkl"
     local_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, local_path)
     logger.info("Model saved to %s", local_path)
 
+    run_id = mlflow.active_run().info.run_id
+    run_info = {"mlflow_run_id": run_id}
+    with open(local_path.with_suffix(".run_id.json"), "w") as f:
+        json.dump(run_info, f)
+    logger.info("Run ID saved to %s", local_path.with_suffix(".run_id.json"))
+
     if register_name:
-        run_id = mlflow.active_run().info.run_id
         model_uri = f"runs:/{run_id}/model"
         result = mlflow.register_model(model_uri, register_name)
         logger.info(

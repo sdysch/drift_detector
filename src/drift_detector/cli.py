@@ -71,7 +71,7 @@ def best(config, metric, direction):
 )
 @click.option(
     "--target",
-    required=True,
+    default="target",
     help="Name of the target column in the CSV.",
 )
 @click.option(
