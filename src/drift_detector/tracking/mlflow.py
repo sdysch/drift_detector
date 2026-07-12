@@ -101,8 +101,10 @@ def log_package_versions():
 
 
 def log_config(config):
-    """Log the full merged config as a JSON artifact."""
-    mlflow.log_text(json.dumps(config, indent=2), "config.json")
+    """Log the full config as a JSON artifact."""
+    mlflow.log_text(
+        json.dumps(config.model_dump_serializable(), indent=2), "config.json"
+    )
 
 
 def log_json_artifact(data, filename):

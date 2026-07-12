@@ -1,137 +1,84 @@
 """Optuna search space definitions for each model."""
 
+from typing import Literal
 
-def random_forest_search_space(
-    trial,
-    config,
-):
-    """Suggest hyper-parameters for a Random Forest regressor.
+from pydantic import BaseModel, RootModel, model_validator
 
-    Parameters
-    ----------
-    trial : optuna.trial.Trial
-        Active Optuna trial used to suggest values.
-    config : dict
-        Search-space configuration read from the YAML config.
 
-    Returns
-    -------
-    dict
-        Parameter dict accepted by ``RandomForestRegressor``.
+class SearchSpaceEntry(BaseModel):
+    """A single hyper-parameter search-space range."""
+
+    type: Literal["int", "float"]
+    low: float
+    high: float
+    log: bool = False
+
+    @model_validator(mode="after")
+    def _validate_bounds(self):
+        if self.low >= self.high:
+            raise ValueError(f"low ({self.low}) must be less than high ({self.high})")
+        return self
+
+    @model_validator(mode="after")
+    def _validate_log_with_int(self):
+        if self.log and self.type == "int":
+            raise ValueError("log scale is not supported for integer parameters")
+        return self
+
+
+class SearchSpaceConfig(RootModel):
+    """Validated search-space configuration for a model.
+
+    Accepts the raw ``search_space`` dict from the YAML config, where
+    each key is a hyper-parameter name mapping to its range definition.
     """
-    return {
-        "n_estimators": trial.suggest_int(
-            "n_estimators",
-            config["n_estimators"]["low"],
-            config["n_estimators"]["high"],
-        ),
-        "max_depth": trial.suggest_int(
-            "max_depth",
-            config["max_depth"]["low"],
-            config["max_depth"]["high"],
-        ),
-    }
+
+    root: dict[str, SearchSpaceEntry]
 
 
-def xgboost_search_space(
+def _suggest_param(
     trial,
-    config,
+    entry: SearchSpaceEntry,
+    name: str,
 ):
-    """Suggest hyper-parameters for an XGBoost regressor.
+    """Suggest a value for a single hyper-parameter."""
+    if entry.type == "int":
+        return trial.suggest_int(name, int(entry.low), int(entry.high))
+    return trial.suggest_float(name, entry.low, entry.high, log=entry.log)
 
-    Parameters
-    ----------
-    trial : optuna.trial.Trial
-        Active Optuna trial used to suggest values.
-    config : dict
-        Search-space configuration read from the YAML config.
 
-    Returns
-    -------
-    dict
-        Parameter dict accepted by ``XGBRegressor``.
-    """
-    return {
-        "n_estimators": trial.suggest_int(
+def _build_params(trial, space: SearchSpaceConfig, names: list[str]):
+    """Build a param dict by suggesting each named parameter."""
+    return {name: _suggest_param(trial, space.root[name], name) for name in names}
+
+
+def random_forest_search_space(trial, space: SearchSpaceConfig):
+    """Suggest hyper-parameters for a Random Forest regressor."""
+    return _build_params(trial, space, ["n_estimators", "max_depth"])
+
+
+def xgboost_search_space(trial, space: SearchSpaceConfig):
+    """Suggest hyper-parameters for an XGBoost regressor."""
+    return _build_params(
+        trial,
+        space,
+        [
             "n_estimators",
-            config["n_estimators"]["low"],
-            config["n_estimators"]["high"],
-        ),
-        "learning_rate": trial.suggest_float(
             "learning_rate",
-            config["learning_rate"]["low"],
-            config["learning_rate"]["high"],
-            log=config["learning_rate"].get("log", False),
-        ),
-        "max_depth": trial.suggest_int(
             "max_depth",
-            config["max_depth"]["low"],
-            config["max_depth"]["high"],
-        ),
-        "min_child_weight": trial.suggest_int(
             "min_child_weight",
-            config["min_child_weight"]["low"],
-            config["min_child_weight"]["high"],
-        ),
-        "subsample": trial.suggest_float(
             "subsample",
-            config["subsample"]["low"],
-            config["subsample"]["high"],
-        ),
-        "colsample_bytree": trial.suggest_float(
             "colsample_bytree",
-            config["colsample_bytree"]["low"],
-            config["colsample_bytree"]["high"],
-        ),
-        "gamma": trial.suggest_float(
             "gamma",
-            config["gamma"]["low"],
-            config["gamma"]["high"],
-        ),
-        "reg_alpha": trial.suggest_float(
             "reg_alpha",
-            config["reg_alpha"]["low"],
-            config["reg_alpha"]["high"],
-            log=config["reg_alpha"].get("log", False),
-        ),
-        "reg_lambda": trial.suggest_float(
             "reg_lambda",
-            config["reg_lambda"]["low"],
-            config["reg_lambda"]["high"],
-            log=config["reg_lambda"].get("log", False),
-        ),
-    }
+        ],
+    )
 
 
-def ridge_search_space(
-    trial,
-    config,
-):
-    """Suggest hyper-parameters for a Ridge regressor.
-
-    Parameters
-    ----------
-    trial : optuna.trial.Trial
-        Active Optuna trial used to suggest values.
-    config : dict
-        Search-space configuration read from the YAML config.
-
-    Returns
-    -------
-    dict
-        Parameter dict accepted by ``Ridge``.
-    """
-    return {
-        "alpha": trial.suggest_float(
-            "alpha",
-            config["alpha"]["low"],
-            config["alpha"]["high"],
-            log=config["alpha"].get(
-                "log",
-                False,
-            ),
-        ),
-    }
+def ridge_search_space(trial, space: SearchSpaceConfig):
+    """Suggest hyper-parameters for a Ridge regressor."""
+    return _build_params(trial, space, ["alpha"])
 
 
 SEARCH_SPACES = {
@@ -141,12 +88,8 @@ SEARCH_SPACES = {
 }
 
 
-def get_search_space(
-    model_name,
-    trial,
-    config,
-):
-    """Return the search-space function for *model_name* and call it.
+def get_search_space(model_name, trial, config):
+    """Validate the search-space config and suggest parameters.
 
     Parameters
     ----------
@@ -155,14 +98,12 @@ def get_search_space(
     trial : optuna.trial.Trial
         Active Optuna trial.
     config : dict
-        Search-space configuration from the YAML config.
+        Raw search-space configuration from the YAML config.
 
     Returns
     -------
     dict
         Hyper-parameter suggestions for the requested model.
     """
-    return SEARCH_SPACES[model_name](
-        trial,
-        config,
-    )
+    space = SearchSpaceConfig.model_validate(config)
+    return SEARCH_SPACES[model_name](trial, space)

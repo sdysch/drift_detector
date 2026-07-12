@@ -40,16 +40,14 @@ def load_config(config_path):
 
     Returns
     -------
-    dict
-        Configuration dictionary.
+    Config
+        Validated configuration object.
     """
     config = load_config_yaml(config_path)
-    model_name = config.get("model", {}).get("name", "unknown")
 
-    tracking = config.get("tracking", {})
     setup_mlflow(
-        tracking_uri=tracking.get("uri", "mlruns"),
-        experiment_name=f"{model_name}_experiments",
+        tracking_uri=config.tracking.uri,
+        experiment_name=f"{config.model.name}_experiments",
     )
 
     return config
@@ -62,8 +60,8 @@ def _timestamp():
 def _prepare_data(config):
     """Load training data and extract feature lists."""
     X_train, y_train = load_training_data(config)
-    numeric = config["features"]["numeric"]
-    categorical = config["features"]["categorical"]
+    numeric = config.features.numeric
+    categorical = config.features.categorical
     return X_train, y_train, numeric, categorical
 
 
@@ -76,7 +74,7 @@ def run_train(config_path):
         Path to the YAML config file.
     """
     config = load_config(config_path)
-    model_name = config["model"]["name"]
+    model_name = config.model.name
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
     with start_run(run_name=f"{model_name}-train-{_timestamp()}"):
@@ -85,24 +83,22 @@ def run_train(config_path):
         log_config(config)
         log_features(numeric, categorical)
         log_data_shape(X_train, y_train)
-        log_model_params(config["params"])
+        log_model_params(config.params)
 
         t0 = time.perf_counter()
-        obj_metric = config.get("metric") or (config.get("optuna", {}) or {}).get(
-            "metric"
-        )
         pipeline = train_model(
             model_name=model_name,
-            params=config["params"],
+            params=config.params,
             X_train=X_train,
             y_train=y_train,
             numeric_features=numeric,
             categorical_features=categorical,
-            objective_metric=obj_metric,
+            objective_metric=config.resolved_metric,
         )
         train_time = time.perf_counter() - t0
-        suffix = config.get("save_name_suffix")
-        save_model(pipeline, register_name=model_name, name_suffix=suffix)
+        save_model(
+            pipeline, register_name=model_name, name_suffix=config.save_name_suffix
+        )
 
         y_pred = pipeline.predict(X_train)
         metrics = compute_metrics(y_train, y_pred)
@@ -124,7 +120,7 @@ def run_optimise(config_path):
         Path to the YAML config file.
     """
     config = load_config(config_path)
-    model_name = config["model"]["name"]
+    model_name = config.model.name
     X_train, y_train, numeric, categorical = _prepare_data(config)
 
     study = run_optimisation(
@@ -143,10 +139,7 @@ def run_optimise(config_path):
         log_data_shape(X_train, y_train)
         log_optuna_plots(study)
         log_json_artifact(study.best_params, "best_params.json")
-        best_metric_name = (
-            config.get("metric") or (config.get("optuna") or {}).get("metric") or "rmse"
-        )
-        log_metrics({best_metric_name: study.best_value})
+        log_metrics({config.resolved_metric: study.best_value})
         logger.info("Best params: %s", study.best_params)
 
 
@@ -169,7 +162,7 @@ def run_best(config_path, metric="rmse", direction="minimize"):
         ``(params, metrics)`` from the best run.
     """
     config = load_config(config_path)
-    model_name = config["model"]["name"]
+    model_name = config.model.name
 
     order = f"metrics.{metric} {'ASC' if direction == 'minimize' else 'DESC'}"
     runs = mlflow.search_runs(

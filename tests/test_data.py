@@ -5,6 +5,7 @@ import pytest
 from drift_detector.data.generate import make_dataset
 from drift_detector.data.load import load_training_data
 from drift_detector.data.split import split_dataset
+from drift_detector.utils.config import Config
 
 
 class TestMakeDataset:
@@ -92,13 +93,16 @@ class TestLoadTrainingData:
         )
         df.to_csv(csv_path, index=False)
 
-        config = {
-            "data": {"path": str(csv_path), "target": "target"},
-            "features": {
-                "numeric": ["feature_1", "feature_2"],
-                "categorical": ["category"],
-            },
-        }
+        config = Config.model_validate(
+            {
+                "data": {"path": str(csv_path), "target": "target"},
+                "features": {
+                    "numeric": ["feature_1", "feature_2"],
+                    "categorical": ["category"],
+                },
+                "model": {"name": "linear"},
+            }
+        )
         X, y = load_training_data(config)
         assert X.shape == (3, 3)
         assert list(X.columns) == ["feature_1", "feature_2", "category"]
@@ -107,9 +111,15 @@ class TestLoadTrainingData:
     def test_missing_feature_raises(self, tmp_path):
         csv_path = tmp_path / "data.csv"
         pd.DataFrame({"feature_1": [1], "target": [10]}).to_csv(csv_path, index=False)
-        config = {
-            "data": {"path": str(csv_path), "target": "target"},
-            "features": {"numeric": ["feature_1", "missing_col"], "categorical": []},
-        }
+        config = Config.model_validate(
+            {
+                "data": {"path": str(csv_path), "target": "target"},
+                "features": {
+                    "numeric": ["feature_1", "missing_col"],
+                    "categorical": [],
+                },
+                "model": {"name": "linear"},
+            }
+        )
         with pytest.raises(KeyError):
             load_training_data(config)
