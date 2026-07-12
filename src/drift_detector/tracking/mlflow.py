@@ -105,6 +105,11 @@ def log_config(config):
     mlflow.log_text(json.dumps(config, indent=2), "config.json")
 
 
+def log_json_artifact(data, filename):
+    """Log an arbitrary dict as a JSON artifact."""
+    mlflow.log_text(json.dumps(data, indent=2, default=str), filename)
+
+
 def log_features(numeric, categorical):
     """Log the feature lists used in the run."""
     mlflow.log_param("features_numeric", json.dumps(numeric))

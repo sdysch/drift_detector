@@ -20,8 +20,6 @@ features:
 
 random_state: 42
 
-metric: mae
-
 model:
   name: xgboost
 
