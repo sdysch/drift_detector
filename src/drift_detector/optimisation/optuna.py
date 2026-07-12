@@ -18,15 +18,6 @@ logger = logging.getLogger(__name__)
 _DIRECTION = {"r2": "maximize"}
 
 
-def _get_metric(config):
-    """Return (metric_name, direction) from the config."""
-    metric = (
-        config.get("metric") or (config.get("optuna") or {}).get("metric") or "rmse"
-    )
-    direction = _DIRECTION.get(metric, "minimize")
-    return metric, direction
-
-
 def create_objective(
     X_train,
     y_train,
@@ -46,8 +37,8 @@ def create_objective(
         Training features.
     y_train : pd.Series
         Training target.
-    config : dict
-        Full training configuration.
+    config : Config
+        Validated training configuration.
     numeric_features : list[str]
         Names of numeric columns for preprocessing.
     categorical_features : list[str]
@@ -59,14 +50,14 @@ def create_objective(
         ``objective(trial) -> float`` compatible with
         ``optuna.study.Study.optimize``.
     """
-    metric, _ = _get_metric(config)
-    model_name = config["model"]["name"]
+    metric = config.resolved_metric
+    model_name = config.model.name
 
     def objective(trial):
         params = get_search_space(
             model_name,
             trial,
-            config["optuna"]["search_space"],
+            config.optuna.search_space,
         )
 
         obj = objective_for_model(model_name, metric)
@@ -135,12 +126,12 @@ def run_optimisation(
     optuna.study.Study
         Completed study with optimisation results.
     """
-    _, direction = _get_metric(config)
+    direction = _DIRECTION.get(config.resolved_metric, "minimize")
 
     study = optuna.create_study(
         direction=direction,
-        study_name=config["study"]["name"],
-        storage=config["study"].get("storage"),
+        study_name=config.study.name,
+        storage=config.study.storage if config.study else None,
         load_if_exists=True,
     )
 
@@ -154,8 +145,8 @@ def run_optimisation(
 
     study.optimize(
         objective,
-        n_trials=config["optuna"]["n_trials"],
-        n_jobs=config["optuna"].get("n_jobs", 1),
+        n_trials=config.optuna.n_trials,
+        n_jobs=config.optuna.n_jobs,
     )
 
     return study

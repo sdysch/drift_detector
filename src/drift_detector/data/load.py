@@ -12,8 +12,8 @@ def load_training_data(config):
 
     Parameters
     ----------
-    config : dict
-        Merged configuration containing ``data.path``, ``data.target``,
+    config : Config
+        Validated configuration containing ``data.path``, ``data.target``,
         ``features.numeric``, and ``features.categorical``.
 
     Returns
@@ -21,11 +21,11 @@ def load_training_data(config):
     tuple[pd.DataFrame, pd.Series]
         ``(X_train, y_train)`` ready for model training.
     """
-    path = config["data"]["path"]
-    target = config["data"]["target"]
+    path = config.data.path
+    target = config.data.target
 
-    numeric = config["features"]["numeric"]
-    categorical = config["features"]["categorical"]
+    numeric = config.features.numeric
+    categorical = config.features.categorical
 
     logger.info("Loading training data from %s", path)
 
