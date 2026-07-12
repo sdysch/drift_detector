@@ -14,7 +14,7 @@ wheels/
 *.db
 
 mlruns/
-models/
+/models/
 
 plots/
 !plots/correlation_heatmap.png
