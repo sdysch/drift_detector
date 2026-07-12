@@ -15,9 +15,11 @@ def tmp_config_dir(tmp_path):
 
 
 @pytest.fixture
-def minimal_config_data():
+def minimal_config_data(tmp_path):
+    csv = tmp_path / "train.csv"
+    csv.write_text("x,y\n1,2\n")
     return {
-        "data": {"path": "data/train.csv", "target": "target"},
+        "data": {"path": str(csv), "target": "y"},
         "model": {"name": "linear"},
     }
 
@@ -28,7 +30,7 @@ class TestLoadConfig:
         config = load_config(path)
         assert isinstance(config, Config)
         assert config.model.name == "linear"
-        assert config.data.target == "target"
+        assert config.data.target == "y"
 
     def test_missing_file_raises(self):
         with pytest.raises(FileNotFoundError):
@@ -63,11 +65,13 @@ class TestConfigDefaults:
 
 
 class TestConfigValidation:
-    def test_invalid_model_name_raises(self):
+    def test_invalid_model_name_raises(self, tmp_path):
+        csv = tmp_path / "train.csv"
+        csv.write_text("x,y\n1,2\n")
         with pytest.raises(Exception):
             Config.model_validate(
                 {
-                    "data": {"path": "data/train.csv", "target": "y"},
+                    "data": {"path": str(csv), "target": "y"},
                     "model": {"name": "invalid_model"},
                 }
             )
@@ -85,15 +89,19 @@ class TestConfigValidation:
                 }
             )
 
-    def test_missing_model_raises(self):
+    def test_missing_model_raises(self, tmp_path):
+        csv = tmp_path / "train.csv"
+        csv.write_text("x,y\n1,2\n")
         with pytest.raises(Exception):
-            Config.model_validate({"data": {"path": "data/train.csv", "target": "y"}})
+            Config.model_validate({"data": {"path": str(csv), "target": "y"}})
 
-    def test_all_model_names_accepted(self):
+    def test_all_model_names_accepted(self, tmp_path):
+        csv = tmp_path / "train.csv"
+        csv.write_text("x,y\n1,2\n")
         for name in ["linear", "ridge", "random_forest", "xgboost"]:
             config = Config.model_validate(
                 {
-                    "data": {"path": "data/train.csv", "target": "y"},
+                    "data": {"path": str(csv), "target": "y"},
                     "model": {"name": name},
                 }
             )
