@@ -16,6 +16,7 @@ from drift_detector.tracking.mlflow import (
     log_data_shape,
     log_features,
     log_git_info,
+    log_json_artifact,
     log_metrics,
     log_model_params,
     log_optuna_plots,
@@ -141,7 +142,11 @@ def run_optimise(config_path):
         log_features(numeric, categorical)
         log_data_shape(X_train, y_train)
         log_optuna_plots(study)
-        log_metrics(study.best_params)
+        log_json_artifact(study.best_params, "best_params.json")
+        best_metric_name = (
+            config.get("metric") or (config.get("optuna") or {}).get("metric") or "rmse"
+        )
+        log_metrics({best_metric_name: study.best_value})
         logger.info("Best params: %s", study.best_params)
 
 
