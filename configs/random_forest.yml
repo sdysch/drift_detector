@@ -35,7 +35,7 @@ study:
 optuna:
   metric: rmse
   n_trials: 100
-  n_jobs: 4
+  n_jobs: 6
 
   search_space:
     n_estimators:
