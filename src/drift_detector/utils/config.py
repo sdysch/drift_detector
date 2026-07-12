@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,12 @@ class TrackingConfig(BaseModel):
 class DataConfig(BaseModel):
     path: Path
     target: str
+
+    @model_validator(mode="after")
+    def _check_path_exists(self):
+        if not self.path.exists():
+            raise ValueError(f"data path does not exist: {self.path}")
+        return self
 
 
 class FeaturesConfig(BaseModel):

@@ -76,6 +76,15 @@ class TestConfigValidation:
         with pytest.raises(Exception):
             Config.model_validate({"model": {"name": "linear"}})
 
+    def test_nonexistent_data_path_raises(self):
+        with pytest.raises(ValueError, match="data path does not exist"):
+            Config.model_validate(
+                {
+                    "data": {"path": "nonexistent/data.csv", "target": "y"},
+                    "model": {"name": "linear"},
+                }
+            )
+
     def test_missing_model_raises(self):
         with pytest.raises(Exception):
             Config.model_validate({"data": {"path": "data/train.csv", "target": "y"}})
