@@ -11,7 +11,6 @@ from drift_detector.metrics import compute_metrics
 from drift_detector.models.models import objective_for_model
 from drift_detector.models.pipeline import build_pipeline
 from drift_detector.optimisation.search_spaces import get_search_space
-from drift_detector.tracking.mlflow import setup_mlflow
 
 logger = logging.getLogger(__name__)
 
@@ -87,11 +86,6 @@ def create_objective(
         trial_time = time.perf_counter() - t0
         metrics = compute_metrics(y_train, y_pred)
         metrics["trial_time_s"] = round(trial_time, 3)
-
-        setup_mlflow(
-            tracking_uri=config.get("tracking", {}).get("uri", "mlruns"),
-            experiment_name=f"{model_name}_experiments",
-        )
 
         with mlflow.start_run(run_name=f"trial_{trial.number}"):
             mlflow.log_param("model", model_name)
