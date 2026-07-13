@@ -1,8 +1,13 @@
+from pathlib import Path
+
 import pandas as pd
 from scipy.stats import ttest_ind
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+_OUT = Path("plots")
+_OUT.mkdir(parents=True, exist_ok=True)
 
 numeric = [
     "feature_1",
@@ -49,6 +54,34 @@ for label in ["slow", "multi", "concept"]:
             f"t={stat:>8.3f}  p={pval:.2e}{flag}"
         )
 
+# %% feature distribution comparison plots
+for label in ["slow", "multi", "concept"]:
+    combined = pd.concat(
+        [dfs["none"].assign(source="clean"), dfs[label].assign(source=label)],
+        ignore_index=True,
+    )
+    n_cols = 3
+    n_rows = (len(numeric) + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 4 * n_rows))
+    axes = axes.flatten()
+    for ax, col in zip(axes, numeric):
+        sns.histplot(
+            data=combined,
+            x=col,
+            hue="source",
+            stat="density",
+            common_norm=False,
+            alpha=0.5,
+            ax=ax,
+        )
+        ax.set_title(col)
+    for ax in axes[len(numeric) :]:
+        ax.set_visible(False)
+    fig.suptitle(f"Feature distributions: clean vs {label}")
+    fig.tight_layout()
+    fig.savefig(_OUT / f"features_{label}_vs_clean.png")
+    plt.close(fig)
+
 # %% Compare targets
 fig, ax = plt.subplots()
 sns.histplot(
@@ -58,4 +91,5 @@ sns.histplot(
     stat="density",
     common_norm=False,
 )
-fig.savefig("plots/targets_drift.png")
+fig.savefig(_OUT / "targets_drift.png")
+plt.close(fig)
