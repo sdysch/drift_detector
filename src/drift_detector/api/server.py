@@ -9,7 +9,8 @@ import os
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from starlette.responses import JSONResponse
 
 from drift_detector.utils.logging import configure_logging
 
@@ -28,7 +29,21 @@ _pipeline = None
 _model_path = None
 
 
+_FEATURE_NAMES = [
+    "feature_1",
+    "feature_2",
+    "feature_3",
+    "feature_gaussian",
+    "feature_lognormal",
+    "feature_exponential",
+    "category",
+    "type",
+]
+
+
 class Features(BaseModel):
+    model_config = {"extra": "forbid"}
+
     feature_1: float
     feature_2: float
     feature_3: float
@@ -41,6 +56,32 @@ class Features(BaseModel):
 
 class PredictResponse(BaseModel):
     predictions: list[float]
+
+
+@app.exception_handler(ValidationError)
+def _validation_handler(request, exc: ValidationError):
+    unknown = [e for e in exc.errors() if e["type"] == "extra_forbidden"]
+    missing = [e for e in exc.errors() if e["type"] == "missing"]
+
+    messages = []
+    if unknown:
+        names = [e["loc"][-1] for e in unknown]
+        messages.append(
+            f"Unrecognised feature(s): {', '.join(names)}. "
+            f"Valid features: {', '.join(_FEATURE_NAMES)}."
+        )
+    for e in missing:
+        messages.append(f"Missing required feature: '{e['loc'][-1]}'.")
+
+    others = [e for e in exc.errors() if e not in unknown and e not in missing]
+    for e in others:
+        field = ".".join(str(p) for p in e["loc"])
+        messages.append(f"Invalid value for '{field}': {e['msg']}.")
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": messages},
+    )
 
 
 def load_pipeline(path: Path) -> object:
