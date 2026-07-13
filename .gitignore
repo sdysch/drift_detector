@@ -12,6 +12,8 @@ wheels/
 *.csv
 
 *.db
+*.db-shm
+*.db-wal
 
 mlruns/
 /models/
