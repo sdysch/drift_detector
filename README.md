@@ -2,6 +2,17 @@
 
 A framework for testing real-time data drift detection on regression models.
 
+## Table of Contents
+
+- [Setup](#setup)
+- [Usage](#usage)
+- [Commands](#commands)
+  - [Eval options](#eval-options)
+  - [Configs](#configs)
+- [Dataset](#dataset)
+- [Plots](#plots)
+- [Model Serving](#model-serving)
+
 ## Setup
 
 ```bash
@@ -98,17 +109,6 @@ Target is standardised to zero mean, unit variance.
 | ![Correlation Heatmap](plots/correlation_heatmap.png) | ![Feature Histograms](plots/feature_histograms.png) |
 
 Evaluation plots are saved to `plots/{model_name}/plots/`. The eval command produces actual-vs-predicted scatter, residual histogram, residuals-vs-predicted scatter, and error-by-feature plots.
-
-## To do
-- [ ] optuna:
-    - [X] Store features used
-    - [X] Store more metrics
-    - [X] Add plot artifacts to mlflow
-    - [ ] Store models
-- [ ] Add tests
-- [ ] Pydantic validation
-- [ ] Update README
-- [X] Final retraining pipeline as separate CLI step
 
 ## Model Serving
 
