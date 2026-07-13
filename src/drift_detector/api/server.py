@@ -17,7 +17,9 @@ from drift_detector.utils.logging import configure_logging
 
 _MODEL_PATH_ENV = "DRIFT_DETECTOR_MODEL_PATH"
 _DEFAULT_MODEL_PATH = (
-    Path(__file__).resolve().parent.parent.parent.parent / "models" / "xgboost_best_v1.pkl"
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "models"
+    / "xgboost_best_v1.pkl"
 )
 
 app = FastAPI(
