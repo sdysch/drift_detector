@@ -1,5 +1,7 @@
 """Command-line interface for drift_detector."""
 
+import json
+
 import click
 import optuna
 
@@ -53,7 +55,8 @@ def train(config):
 )
 def best(config, metric, direction):
     """Find the best run for a model from MLflow."""
-    run_best(config, metric, direction)
+    params, metrics = run_best(config, metric, direction)
+    print(json.dumps({"params": params, "metrics": metrics}, indent=2))
 
 
 @main.command()

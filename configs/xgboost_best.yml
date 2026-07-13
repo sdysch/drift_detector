@@ -24,15 +24,15 @@ model:
   name: xgboost
 
 params:
-  colsample_bytree: 0.8290088264442756
-  min_child_weight: 2
-  reg_alpha: 5.9497016508725835
+  colsample_bytree: 0.96
+  min_child_weight: 9
+  reg_alpha: 4.485
   max_depth: 3
-  subsample: 0.9999284943111119
-  learning_rate: 0.023628961274176817
-  n_estimators: 447
-  gamma: 0.5800631195456216
-  reg_lambda: 9.295254502245774
+  subsample: 0.565
+  learning_rate: 0.045
+  n_estimators: 962
+  gamma: 0
+  reg_lambda: 0.014
 
 save_name_suffix: best
 
