@@ -82,6 +82,50 @@ for label in ["slow", "multi", "concept"]:
     fig.savefig(_OUT / f"features_{label}_vs_clean.png")
     plt.close(fig)
 
+# %% concept-drift: target vs features — clean vs concept side by side
+n_cols = 3
+n_rows = (len(numeric) + n_cols - 1) // n_cols
+fig, axes = plt.subplots(n_rows, n_cols * 2, figsize=(5 * n_cols * 2, 4 * n_rows))
+for i, col in enumerate(numeric):
+    ax_clean = axes[i // n_cols, (i % n_cols) * 2]
+    ax_concept = axes[i // n_cols, (i % n_cols) * 2 + 1]
+    for ax, src, title in [
+        (ax_clean, dfs["none"], "clean"),
+        (ax_concept, dfs["concept"], "concept"),
+    ]:
+        ax.scatter(src[col], src["target"], alpha=0.3, s=10)
+        ax.set_title(f"{col} ({title})")
+        ax.set_xlabel(col)
+        ax.set_ylabel("target")
+fig.suptitle("Target vs features: clean vs concept drift", fontsize=14)
+fig.tight_layout()
+fig.savefig(_OUT / "concept_target_vs_features.png")
+plt.close(fig)
+
+# highlight: feature_1 overlay
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.scatter(
+    dfs["none"]["feature_1"],
+    dfs["none"]["target"],
+    alpha=0.2,
+    s=8,
+    label="clean",
+)
+ax.scatter(
+    dfs["concept"]["feature_1"],
+    dfs["concept"]["target"],
+    alpha=0.2,
+    s=8,
+    label="concept",
+)
+ax.set_xlabel("feature_1")
+ax.set_ylabel("target")
+ax.set_title("Concept drift: target vs feature_1 (clean vs concept)")
+ax.legend()
+fig.tight_layout()
+fig.savefig(_OUT / "concept_target_vs_feature1.png")
+plt.close(fig)
+
 # %% Compare targets
 fig, ax = plt.subplots()
 sns.histplot(
