@@ -62,6 +62,14 @@ class PredictResponse(BaseModel):
     predictions: list[float]
 
 
+class BatchPredictRequest(BaseModel):
+    instances: list[Features]
+
+
+class BatchPredictResponse(BaseModel):
+    predictions: list[float]
+
+
 @app.exception_handler(ValidationError)
 def _validation_handler(request, exc: ValidationError):
     unknown = [e for e in exc.errors() if e["type"] == "extra_forbidden"]
@@ -147,3 +155,20 @@ def predict(features: Features) -> PredictResponse:
         _store.insert(features.model_dump(), prediction)
 
     return PredictResponse(predictions=[prediction])
+
+
+@app.post("/predict/batch", response_model=BatchPredictResponse)
+def predict_batch(batch: BatchPredictRequest) -> BatchPredictResponse:
+    if _pipeline is None:
+        raise HTTPException(503, "Model not loaded")
+
+    rows = [inst.model_dump() for inst in batch.instances]
+    X = pd.DataFrame(rows)
+    y_pred = _pipeline.predict(X)
+    predictions = [float(v) for v in y_pred]
+
+    if _store is not None:
+        for features, pred in zip(rows, predictions):
+            _store.insert(features, pred)
+
+    return BatchPredictResponse(predictions=predictions)
