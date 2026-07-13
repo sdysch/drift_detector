@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ValidationError
 from starlette.responses import JSONResponse
 
+from drift_detector.api.store import PredictionStore
 from drift_detector.utils.logging import configure_logging
 
 _MODEL_PATH_ENV = "DRIFT_DETECTOR_MODEL_PATH"
@@ -27,6 +28,7 @@ app = FastAPI(
 
 _pipeline = None
 _model_path = None
+_store: PredictionStore | None = None
 
 
 _FEATURE_NAMES = [
@@ -107,10 +109,11 @@ def _resolve_model_path(override: str | None = None) -> Path:
 
 @app.on_event("startup")
 def startup():
-    global _pipeline, _model_path
+    global _pipeline, _model_path, _store
     configure_logging()
     _model_path = _resolve_model_path()
     _pipeline = load_pipeline(_model_path)
+    _store = PredictionStore()
 
 
 @app.get("/health")
@@ -136,4 +139,9 @@ def predict(features: Features) -> PredictResponse:
 
     X = pd.DataFrame([features.model_dump()])
     y_pred = _pipeline.predict(X)
-    return PredictResponse(predictions=y_pred.tolist())
+    prediction = float(y_pred[0])
+
+    if _store is not None:
+        _store.insert(features.model_dump(), prediction)
+
+    return PredictResponse(predictions=[prediction])
