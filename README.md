@@ -34,16 +34,20 @@ uv run drift_detector best --config configs/xgboost.yml
 
 # Launch MLflow UI
 uv run mlflow ui --backend-store-uri sqlite:///mlflow.db
+
+# Serve the best model via API
+uv run drift_detector serve
 ```
 
 ## Commands
 
 | Command | Description |
-|---|---|
+|---|---|---|
 | `train --config <file>` | Train with model-specific config |
 | `optimise --config <file>` | Optuna hyper-parameter search |
 | `eval --model <pkl> --data <csv>` | Evaluate, compare to train metrics, generate plots |
 | `best --config <file>` | Query MLflow for best run |
+| `serve` | Start FastAPI server (default `127.0.0.1:8000`) |
 
 ### Eval options
 
@@ -105,3 +109,26 @@ Evaluation plots are saved to `plots/{model_name}/plots/`. The eval command prod
 - [ ] Pydantic validation
 - [ ] Update README
 - [X] Final retraining pipeline as separate CLI step
+
+## Model Serving
+
+Start the API:
+
+```bash
+uv run drift_detector serve
+```
+
+Available endpoints:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/health` | GET | Healthcheck + model load status |
+| `/predict` | POST | Return prediction for a single sample |
+
+Example prediction:
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"feature_1": 0.5, "feature_2": 1.2, "feature_3": -0.3, "feature_gaussian": 0.1, "feature_lognormal": 2.5, "feature_exponential": 0.8, "category": "A", "type": "type_1"}'
+```
