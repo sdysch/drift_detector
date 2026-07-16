@@ -22,3 +22,6 @@ plots/
 !plots/correlation_heatmap.png
 !plots/feature_histograms.png
 !plots/pairplot.png
+
+/reports/
+!/reports/.gitkeep
